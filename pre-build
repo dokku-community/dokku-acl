@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+APP="$1";
+ACL="$DOKKU_ROOT/$APP/acl"
+
+if [ ! -d "$ACL" ];
+then
+	exit; # all good, there are no restrictions
+fi
+
+ACL_FILE="$ACL/$NAME"
+
+if [ ! -f "$ACL_FILE" ];
+then
+	echo "User $NAME does not have permissions to push to this repository" >&2
+	exit 2;
+fi
+
+exit 2;
+

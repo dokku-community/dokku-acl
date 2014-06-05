@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+set -u
+
+APP=${2:-}
+ACL_PATH="$DOKKU_ROOT/$APP/acl"
+
+check_app () {
+  if [ -z "$1" ];
+  then
+    echo "You must provide an app name!" >&2
+    echo 1;
+    exit;    
+  fi
+
+  if [ ! -d "$DOKKU_ROOT/$1" ];
+  then 
+    echo "No such app: $1" >&2
+    echo 2;
+    exit;
+  fi
+
+  if [ -n "${NAME:-}" ];
+  then
+    echo "You can only modify ACL using local dokku command on target host" >&2
+    echo 3;
+    exit;
+  fi
+
+  echo 0
+}
+
+check_admin () {
+	echo 1
+}
+
+case "$1" in
+  acl:add)
+    test $(check_app "$APP") -eq 0;
+
+    USER=${3:-}
+
+    if [ -z "$USER" ];
+    then
+      echo "Please specify a user name" >&2
+      exit 1;
+    fi
+
+    [ ! -d "$ACL_PATH" ] && mkdir "$ACL_PATH";
+
+    ACL_FILE="$ACL_PATH/$USER"
+    if [ -f "$ACL_FILE" ];
+    then
+       echo "User aleady has permissions to push to this repository"
+       exit 2;
+    fi
+    touch "$ACL_FILE"
+    ;;
+  acl:remove)
+    test $(check_app "$APP") -eq 0;
+    USER=${3:-}
+
+    if [ -z "$USER" ];
+    then
+      echo "Please specify a user name" >&2
+      exit 1;
+    fi
+    
+    ACL_FILE="$ACL_PATH/"$(basename $USER);
+    [ -f "$ACL_FILE" ] && rm "$ACL_FILE";
+    [ -d "$ACL_PATH" ] && [ -z $(ls "$ACL_PATH") ] && rmdir "$ACL_PATH";
+      
+    ;;
+  acl:list) 
+    [ -n "$APP" ] && ls -1 "$DOKKU_ROOT/$APP/acl" >&2  2>/dev/null;
+    ;;
+  acl:info)
+   cat >&2 <<EOF
+
+Your user is indentified by \$NAME env defined in ~dokku/.ssh/authorized_keys.
+ * Use acl:add to restrict pushing only to certain users. 
+ * Use acl:remove to revoke access for user.
+If you remove the last user from the acl:list everyone will be able to push.
+
+EOF
+   ;;
+  help)
+    cat && cat<<EOF
+    acl:add <app> <user>                            Allow user to push to this repository
+    acl:remove <app> <user>                         Revoke users access to the repository
+    acl:list <app>                                  Show list of users with access to repository
+    acl:info                                        Show information on configuring this plugin
+EOF
+    ;;
+
+esac
+
+
+
