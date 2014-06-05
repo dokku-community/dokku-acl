@@ -16,6 +16,3 @@ then
 	echo "User $NAME does not have permissions to push to this repository" >&2
 	exit 2;
 fi
-
-exit 2;
-
