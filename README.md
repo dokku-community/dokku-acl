@@ -3,6 +3,8 @@ ACL plugin for dokku
 
 Dokku: https://github.com/progrium/dokku
 
+This plugin adds the ability to restrict push privileges for app to certain users.
+
 Installation
 ------------
 ```
