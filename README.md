@@ -35,3 +35,15 @@ Defining users
 --------------
 
 Every user has their entry in `~dokku/.ssh/authorized_keys`. Use `$NAME` environment variable to define the username.
+
+Default behavior
+----------------
+
+By default every user can push to repositories and even create new ones. You can change that by creating an admin
+user by defining `$DOKKU_SUPER_USER` env in `~dokku/dokkurc`:
+
+```
+export DOKKU_SUPER_USER=puck
+```
+
+If defined, this user is always allowed to push, and empty ACL is restricting access to all other users.
