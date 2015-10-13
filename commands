@@ -34,7 +34,7 @@ check_admin () {
 	echo 1
 }
 
-case "$1" in
+case "${1:-}" in
   acl:add)
     test $(check_app "$APP") -eq 0;
 
