@@ -5,21 +5,18 @@ APP="$1";
 ACL="$DOKKU_ROOT/$APP/acl"
 DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 
-if [ ! -d "$ACL" ];
-then
-   if [ -n "$DOKKU_SUPER_USER" ] && [ "$NAME" != "$DOKKU_SUPER_USER" ];
-   then
-     echo "Only $DOKKU_SUPER_USER can push if the ACL is empty" >&2;
-     exit 1;
-   fi;
+if [[ ! -d "$ACL" ]]; then
+  if [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
+    echo "Only $DOKKU_SUPER_USER can push if the ACL is empty" >&2;
+    exit 1;
+  fi;
 
-	exit; # all good, there are no restrictions
+  exit 0; # all good, there are no restrictions
 fi
 
 ACL_FILE="$ACL/$NAME"
 
-if [ ! -f "$ACL_FILE" ] && [ "$NAME" != "$DOKKU_SUPER_USER" ];
-then
-	echo "User $NAME does not have permissions to push to this repository" >&2
-	exit 2;
+if [[ ! -f "$ACL_FILE" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
+  echo "User $NAME does not have permissions to push to this repository" >&2
+  exit 2;
 fi
