@@ -7,7 +7,7 @@ DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 
 if [[ ! -d "$ACL" ]]; then
   if [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
-    echo "Only $DOKKU_SUPER_USER can push if the ACL is empty" >&2;
+    echo "Only $DOKKU_SUPER_USER can modify a repository if the ACL is empty" >&2;
     exit 1;
   fi;
 
@@ -17,6 +17,6 @@ fi
 ACL_FILE="$ACL/$NAME"
 
 if [[ ! -f "$ACL_FILE" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
-  echo "User $NAME does not have permissions to push to this repository" >&2
+  echo "User $NAME does not have permissions to modify this repository" >&2
   exit 2;
 fi
