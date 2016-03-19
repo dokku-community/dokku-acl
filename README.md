@@ -1,5 +1,7 @@
 # dokku-acl [![Build Status](https://img.shields.io/travis/mlebkowski/dokku-acl.svg?branch=master "Build Status")](https://travis-ci.org/mlebkowski/dokku-acl)
 
+*Access Control List management for Dokku.* 
+
 This plugin adds the ability to restrict push privileges for app to certain users.
 
 ## requirements
