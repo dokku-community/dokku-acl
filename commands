@@ -85,7 +85,7 @@ If you remove the last user from the acl:list everyone will be able to push.
 EOF
    ;;
   help)
-    cat && cat<<EOF
+    cat<<EOF
     acl:add <app> <user>                            Allow user to push to this repository
     acl:remove <app> <user>                         Revoke users access to the repository
     acl:list <app>                                  Show list of users with access to repository
