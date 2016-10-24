@@ -94,7 +94,7 @@ help_content
 		help_content_func
 	else
 		cat<<help_desc
-    acl:, Plugin for adding the ability to restrict push privileges for app to certain users
+    acl, Plugin for adding the ability to restrict push privileges for app to certain users
 help_desc
 	fi
     ;;
