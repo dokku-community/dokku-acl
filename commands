@@ -78,7 +78,6 @@ case "${1:-}" in
     ;;
   help | acl:help)
 	help_content_func() {
-		declare desc="return acl: plugin help content"
 		cat<<help_content
     acl:add <app> <user>, Allow user to push to this repository
     acl:remove <app> <user>, Revoke users access to the repository
