@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+
+[[ " help acl:help " == *" $1 "* ]] || [[ "$1" == "acl:"* ]] || exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 set -u
 
@@ -74,25 +76,30 @@ case "${1:-}" in
   acl:list) 
     [ -n "$APP" ] && ls -1 "$DOKKU_ROOT/$APP/acl" >&2  2>/dev/null;
     ;;
-  acl:info)
-   cat >&2 <<EOF
-
-Your user is indentified by \$NAME env defined in ~dokku/.ssh/authorized_keys.
- * Use acl:add to restrict pushing only to certain users. 
- * Use acl:remove to revoke access for user.
-If you remove the last user from the acl:list everyone will be able to push.
-
-EOF
-   ;;
-  help)
-    cat<<EOF
-    acl:add <app> <user>                            Allow user to push to this repository
-    acl:remove <app> <user>                         Revoke users access to the repository
-    acl:list <app>                                  Show list of users with access to repository
-    acl:info                                        Show information on configuring this plugin
-EOF
+  help | acl:help)
+	help_content_func() {
+		cat<<help_content
+    acl:add <app> <user>, Allow user to push to this repository
+    acl:remove <app> <user>, Revoke users access to the repository
+    acl:list <app>, Show list of users with access to repository
+help_content
+	}
+	if [[ $1 = "acl:help" ]] ; then
+		echo -e "Usage: dokku acl:[:COMMAND]"
+		echo ''
+		echo 'Commands:'
+		help_content_func | sort | column -c2 -t -s,
+	elif [[ $(ps -o command= $PPID) == *"--all"* ]]; then
+		help_content_func
+	else
+		cat<<help_desc
+    acl, Plugin for adding the ability to restrict push privileges for app to certain users
+help_desc
+	fi
     ;;
-
+	*)
+		exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
+		;;
 esac
 
 
