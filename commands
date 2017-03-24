@@ -38,7 +38,7 @@ check_admin () {
 
 case "${1:-}" in
   acl:add)
-    test $(check_app "$APP") -eq 0;
+    test "$(check_app "$APP")" -eq 0;
 
     USER=${3:-}
 
@@ -59,7 +59,7 @@ case "${1:-}" in
     touch "$ACL_FILE"
     ;;
   acl:remove)
-    test $(check_app "$APP") -eq 0;
+    test "$(check_app "$APP")" -eq 0;
     USER=${3:-}
 
     if [ -z "$USER" ];
@@ -68,9 +68,9 @@ case "${1:-}" in
       exit 1;
     fi
 
-    ACL_FILE="$ACL_PATH/"$(basename $USER);
+    ACL_FILE="$ACL_PATH/"$(basename "$USER");
     [ -f "$ACL_FILE" ] && rm "$ACL_FILE";
-    [ -d "$ACL_PATH" ] && [ -z $(ls "$ACL_PATH") ] && rmdir "$ACL_PATH";
+    [ -d "$ACL_PATH" ] && [ -z "$(ls "$ACL_PATH")" ] && rmdir "$ACL_PATH";
 
     ;;
   acl:list)
