@@ -1,4 +1,4 @@
-# dokku-acl [![Build Status](https://img.shields.io/travis/mlebkowski/dokku-acl.svg?branch=master "Build Status")](https://travis-ci.org/mlebkowski/dokku-acl)
+# dokku-acl [![Build Status](https://img.shields.io/travis/dokku-community/dokku-acl.svg?branch=master "Build Status")](https://travis-ci.org/mlebkowski/dokku-acl)
 
 *Access Control List management for Dokku.*
 
