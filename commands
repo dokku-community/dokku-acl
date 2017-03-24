@@ -12,11 +12,11 @@ check_app () {
   then
     echo "You must provide an app name!" >&2
     echo 1;
-    exit;    
+    exit;
   fi
 
   if [ ! -d "$DOKKU_ROOT/$1" ];
-  then 
+  then
     echo "No such app: $1" >&2
     echo 2;
     exit;
@@ -33,7 +33,7 @@ check_app () {
 }
 
 check_admin () {
-	echo 1
+  echo 1
 }
 
 case "${1:-}" in
@@ -67,40 +67,37 @@ case "${1:-}" in
       echo "Please specify a user name" >&2
       exit 1;
     fi
-    
+
     ACL_FILE="$ACL_PATH/"$(basename $USER);
     [ -f "$ACL_FILE" ] && rm "$ACL_FILE";
     [ -d "$ACL_PATH" ] && [ -z $(ls "$ACL_PATH") ] && rmdir "$ACL_PATH";
-      
+
     ;;
-  acl:list) 
+  acl:list)
     [ -n "$APP" ] && ls -1 "$DOKKU_ROOT/$APP/acl" >&2  2>/dev/null;
     ;;
   help | acl:help)
-	help_content_func() {
-		cat<<help_content
+  help_content_func() {
+    cat<<help_content
     acl:add <app> <user>, Allow user to push to this repository
     acl:remove <app> <user>, Revoke users access to the repository
     acl:list <app>, Show list of users with access to repository
 help_content
-	}
-	if [[ $1 = "acl:help" ]] ; then
-		echo -e "Usage: dokku acl:[:COMMAND]"
-		echo ''
-		echo 'Commands:'
-		help_content_func | sort | column -c2 -t -s,
-	elif [[ $(ps -o command= $PPID) == *"--all"* ]]; then
-		help_content_func
-	else
-		cat<<help_desc
+  }
+  if [[ $1 = "acl:help" ]] ; then
+    echo -e "Usage: dokku acl:[:COMMAND]"
+    echo ''
+    echo 'Commands:'
+    help_content_func | sort | column -c2 -t -s,
+  elif [[ $(ps -o command= $PPID) == *"--all"* ]]; then
+    help_content_func
+  else
+    cat<<help_desc
     acl, Plugin for adding the ability to restrict push privileges for app to certain users
 help_desc
-	fi
+  fi
     ;;
-	*)
-		exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
-		;;
+  *)
+    exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
+    ;;
 esac
-
-
-
