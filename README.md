@@ -1,6 +1,6 @@
 # dokku-acl [![Build Status](https://img.shields.io/travis/mlebkowski/dokku-acl.svg?branch=master "Build Status")](https://travis-ci.org/mlebkowski/dokku-acl)
 
-*Access Control List management for Dokku.* 
+*Access Control List management for Dokku.*
 
 This plugin adds the ability to restrict push privileges for app to certain users.
 
@@ -25,7 +25,6 @@ dokku plugin:install https://github.com/mlebkowski/dokku-acl.git acl
 
 ```shell
 acl:add <app> <user>      Allow user to push to this repository
-acl:info                  Show information on configuring this plugin
 acl:list <app>            Show list of users with access to repository
 acl:remove <app> <user>   Revoke users access to the repository
 ```
@@ -35,9 +34,9 @@ acl:remove <app> <user>   Revoke users access to the repository
 There are no restrictions to pushing at first. After you create an app, use `dokku acl:add your-app your-user` to
 restrict access for certain user. After an allowed user list is created for app, no other user will be able to push.
 
-To remove the restrictions, remove all users from the ALC list. You can check it using `dokku acl:info`
+To remove the restrictions, remove all users from the ACL.
 
-You cannot modify the ACL list by ssh (`ssh target-host dokku acl:add …`), you have to do it using local command.
+You cannot modify the ACL list by ssh (`ssh target-host dokku acl:add …`); you have to do it using a local command.
 
 ### defining users
 
@@ -52,4 +51,4 @@ user by defining `$DOKKU_SUPER_USER` env in `~dokku/.dokkurc/acl`:
 export DOKKU_SUPER_USER=puck
 ```
 
-If defined, this user is always allowed to push, and empty ACL is restricting access to all other users.
+If defined, this user is always allowed to push, and no other users are allowed to push to apps with empty ACLs.
