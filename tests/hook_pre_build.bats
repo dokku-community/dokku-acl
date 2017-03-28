@@ -10,7 +10,7 @@ setup() {
 }
 
 teardown() {
-  rm -rf "${APP_DIR:?}"
+  sudo -u dokku rm -rf "${APP_DIR:?}"
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:hook) allows write access by default" {
@@ -22,8 +22,8 @@ teardown() {
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:hook) allows only configured users" {
-  mkdir -p $APP_DIR/acl
-  touch $APP_DIR/acl/user1
+  sudo -u dokku mkdir -p $APP_DIR/acl
+  sudo -u dokku touch $APP_DIR/acl/user1
 
   NAME=user1 run $HOOK $APP
   assert_success
@@ -50,8 +50,8 @@ teardown() {
 
 @test "($PLUGIN_COMMAND_PREFIX:hook) allows configured users plus superuser when enabled" {
   export DOKKU_SUPER_USER=admin
-  mkdir -p $APP_DIR/acl
-  touch $APP_DIR/acl/user1
+  sudo -u dokku mkdir -p $APP_DIR/acl
+  sudo -u dokku touch $APP_DIR/acl/user1
 
   NAME=user1 run $HOOK $APP
   assert_success
