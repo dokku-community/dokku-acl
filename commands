@@ -53,7 +53,7 @@ case "${1:-}" in
     ACL_FILE="$ACL_PATH/$USER"
     if [ -f "$ACL_FILE" ];
     then
-       echo "User aleady has permissions to push to this repository"
+       echo "User already has permissions to push to this repository"
        exit 2;
     fi
     touch "$ACL_FILE"
