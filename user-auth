@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# When enabled via the DOKKU_ACL_USER_COMMANDS variable, allow normal users
+# to run only these commands.
+
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
+DOKKU_ACL_USER_COMMANDS="${DOKKU_ACL_USER_COMMANDS:-}"
+
+SSH_USER=$1
+SSH_NAME=$2
+shift 2
+
+[[ -z "$DOKKU_ACL_USER_COMMANDS" ]] && exit 0
+[[ "$SSH_USER" == "root" ]] && exit 0
+[[ -n "$DOKKU_SUPER_USER" ]] && [[ "$SSH_NAME" == "$DOKKU_SUPER_USER" ]] && exit 0
+
+CMD=$1
+
+for allowed in $DOKKU_ACL_USER_COMMANDS; do
+  [[ "$CMD" == "$allowed" ]] && exit 0
+done
+
+echo "User $SSH_NAME does not have permissions to run $CMD"
+exit 1
