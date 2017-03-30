@@ -74,10 +74,10 @@ teardown() {
   export DOKKU_SUPER_USER=admin
 
   SSH_NAME=default run $HOOK $APP
-  assert_failure "Only admin can modify a repository if the ACL is empty"
+  assert_failure "It appears that you're running this command from the command line.  The \"dokku-acl\" plugin disables this by default for safety.  Please check the \"dokku-acl\" documentation for how to enable command line usage."
 
   run $HOOK $APP
-  assert_failure "Only admin can modify a repository if the ACL is empty"
+  assert_failure "It appears that you're running this command from the command line.  The \"dokku-acl\" plugin disables this by default for safety.  Please check the \"dokku-acl\" documentation for how to enable command line usage."
 
   # App ACL exists, no DOKKU_SUPER_USER -> success
   unset DOKKU_SUPER_USER
@@ -94,8 +94,8 @@ teardown() {
   export DOKKU_SUPER_USER=admin
 
   SSH_NAME=default run $HOOK $APP
-  assert_failure "User  does not have permissions to modify this repository"
+  assert_failure "It appears that you're running this command from the command line.  The \"dokku-acl\" plugin disables this by default for safety.  Please check the \"dokku-acl\" documentation for how to enable command line usage."
 
   run $HOOK $APP
-  assert_failure "User  does not have permissions to modify this repository"
+  assert_failure "It appears that you're running this command from the command line.  The \"dokku-acl\" plugin disables this by default for safety.  Please check the \"dokku-acl\" documentation for how to enable command line usage."
 }
