@@ -29,20 +29,17 @@ teardown() {
   assert_success
 
   NAME=user2 run $HOOK $APP
-  assert_failure
-  assert_output "User user2 does not have permissions to modify this repository"
+  assert_failure "User user2 does not have permissions to modify this repository"
 
   NAME=admin run $HOOK $APP
-  assert_failure
-  assert_output "User admin does not have permissions to modify this repository"
+  assert_failure "User admin does not have permissions to modify this repository"
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:hook) allows only superuser when enabled and no configured users" {
   export DOKKU_SUPER_USER=admin
 
   NAME=user1 run $HOOK $APP
-  assert_output "Only admin can modify a repository if the ACL is empty"
-  assert_failure
+  assert_failure "Only admin can modify a repository if the ACL is empty"
 
   NAME=admin run $HOOK $APP
   assert_success
@@ -57,8 +54,7 @@ teardown() {
   assert_success
 
   NAME=user2 run $HOOK $APP
-  assert_failure
-  assert_output "User user2 does not have permissions to modify this repository"
+  assert_failure "User user2 does not have permissions to modify this repository"
 
   NAME=admin run $HOOK $APP
   assert_success
