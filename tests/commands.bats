@@ -54,6 +54,10 @@ teardown() {
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:default) help information is shown by default" {
+  if [[ $DOKKU_VERSION = 'v0.4.0' ]] ; then
+    skip "Default commands weren't implemented for v0.4.0"
+  fi
+
   run dokku acl:help
   help_output="$output"
   assert_success
