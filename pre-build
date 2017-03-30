@@ -4,20 +4,25 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 APP="$1";
 ACL="$DOKKU_ROOT/$APP/acl"
 DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
+DOKKU_ACL_ALLOW_COMMAND_LINE="${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
 
 if [[ -z "$NAME" ]] ; then
   # Command line usage doesn't set $NAME.
 
-  # Preserve legacy behaviour by default for safety, even though it's weird.
+  if [[ -z "$DOKKU_ACL_ALLOW_COMMAND_LINE" ]] ; then
+    # Preserve legacy behaviour by default for safety, even though it's weird.
 
-  [[ -z "$DOKKU_SUPER_USER" ]] && exit 0
+    [[ -z "$DOKKU_SUPER_USER" ]] && exit 0
 
-  echo -n "It appears that you're running this command from the command "
-  echo -n "line.  The \"dokku-acl\" plugin disables this by default for "
-  echo -n "safety.  Please check the \"dokku-acl\" documentation for how "
-  echo -n "to enable command line usage."
+    echo -n "It appears that you're running this command from the command "
+    echo -n "line.  The \"dokku-acl\" plugin disables this by default for "
+    echo -n "safety.  Please check the \"dokku-acl\" documentation for how "
+    echo -n "to enable command line usage."
 
-  exit 1
+    exit 1
+  fi
+
+  exit 0
 fi
 
 if [[ ! -d "$ACL" ]]; then

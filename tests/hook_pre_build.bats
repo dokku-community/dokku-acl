@@ -99,3 +99,30 @@ teardown() {
   run $HOOK $APP
   assert_failure "It appears that you're running this command from the command line.  The \"dokku-acl\" plugin disables this by default for safety.  Please check the \"dokku-acl\" documentation for how to enable command line usage."
 }
+
+@test "($PLUGIN_COMMAND_PREFIX:hook-pre-build) allows command line usage when DOKKU_ACL_ALLOW_COMMAND_LINE set" {
+  unset NAME
+  export DOKKU_ACL_ALLOW_COMMAND_LINE=1
+
+  # No app ACL, no DOKKU_SUPER_USER -> success
+  run $HOOK $APP
+  assert_success
+
+  # No app ACL, DOKKU_SUPER_USER set -> success
+  export DOKKU_SUPER_USER=admin
+
+  run $HOOK $APP
+  assert_success
+
+  # App ACL exists, no DOKKU_SUPER_USER -> success
+  unset DOKKU_SUPER_USER
+  sudo -u dokku mkdir -p $APP_DIR/acl
+  sudo -u dokku touch $APP_DIR/acl/user1
+
+  run $HOOK $APP
+  assert_success
+
+  # App ACL exists, DOKKU_SUPER_USER set -> success
+  run $HOOK $APP
+  assert_success
+}
