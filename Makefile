@@ -24,7 +24,12 @@ lint:
 	@echo linting...
 	@$(QUIET) find ./ -maxdepth 1 -not -path '*/\.*' | xargs file | egrep "shell|bash" | awk '{ print $$1 }' | sed 's/://g' | xargs shellcheck
 
+unit-tests:
+	@echo running unit tests...
+	@$(QUIET) bats tests
+
 setup:
+	bash tests/setup.sh
 	$(MAKE) ci-dependencies
 
-test: setup lint
+test: setup lint unit-tests

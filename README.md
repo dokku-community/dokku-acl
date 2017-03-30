@@ -9,15 +9,12 @@ This plugin adds the ability to restrict push privileges for app to certain user
 - dokku 0.4.0+
 - docker 1.8.x
 
+- An older version of this plugin works with dokku 0.3.x; the last version
+  known to work is tagged as `for-dokku-0.3.x`.
+
 ## installation
 
 ```shell
-# on 0.3.x
-cd /var/lib/dokku/plugins
-git clone https://github.com/mlebkowski/dokku-acl.git acl
-dokku plugins-install
-
-# on 0.4.x
 dokku plugin:install https://github.com/mlebkowski/dokku-acl.git acl
 ```
 
