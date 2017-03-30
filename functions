@@ -1,7 +1,9 @@
 help_formatted() {
   echo -e "Usage: dokku acl[:COMMAND]"
   echo ''
-  echo 'Commands:'
+  echo 'Manage app-level Access Control Lists.'
+  echo ''
+  echo 'Additional commands:'
   help_content_func | sort | column -c2 -t -s,
 }
 
