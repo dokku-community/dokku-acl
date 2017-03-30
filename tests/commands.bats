@@ -52,3 +52,12 @@ teardown() {
   assert_equal ${lines[0]} "user1"
   assert_equal ${lines[1]} "user2"
 }
+
+@test "($PLUGIN_COMMAND_PREFIX:default) help information is shown by default" {
+  run dokku acl:help
+  help_output="$output"
+  assert_success
+
+  run dokku acl
+  assert_success "$help_output"
+}

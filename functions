@@ -1,0 +1,14 @@
+help_formatted() {
+  echo -e "Usage: dokku acl[:COMMAND]"
+  echo ''
+  echo 'Commands:'
+  help_content_func | sort | column -c2 -t -s,
+}
+
+help_content_func() {
+  cat<<help_content
+  acl:add <app> <user>, Allow user to push to this repository
+  acl:remove <app> <user>, Revoke users access to the repository
+  acl:list <app>, Show list of users with access to repository
+help_content
+}
