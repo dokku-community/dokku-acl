@@ -4,14 +4,17 @@
 
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+
 DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 DOKKU_ACL_USER_COMMANDS="${DOKKU_ACL_USER_COMMANDS:-}"
+DOKKU_ACL_PER_APP_COMMANDS="${DOKKU_ACL_PER_APP_COMMANDS:-}"
 
 SSH_USER=$1
 SSH_NAME=$2
 shift 2
 
-[[ -z "$DOKKU_ACL_USER_COMMANDS" ]] && exit 0
+[[ -z "$DOKKU_ACL_USER_COMMANDS" && -z "$DOKKU_ACL_PER_APP_COMMANDS" ]] && exit 0
 [[ "$SSH_USER" == "root" ]] && exit 0
 [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$SSH_NAME" == "$DOKKU_SUPER_USER" ]] && exit 0
 
@@ -19,6 +22,27 @@ CMD=$1
 
 for allowed in $DOKKU_ACL_USER_COMMANDS; do
   [[ "$CMD" == "$allowed" ]] && exit 0
+done
+
+for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
+  if [[ "$CMD" == "$allowed" ]]; then
+    if [[ -z "$2" ]]; then
+      echo "An app name is required"
+      exit 1
+    fi
+
+    APP=$2
+    if ! ( verify_app_name "$APP" 2>/dev/null ); then
+      echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+      exit 1
+    fi
+
+    ACL_FILE="$DOKKU_ROOT/$APP/acl/$SSH_NAME"
+    [[ -f "$ACL_FILE" ]] && exit 0
+
+    echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+    exit 1
+  fi
 done
 
 echo "User $SSH_NAME does not have permissions to run $CMD"
