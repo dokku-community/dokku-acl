@@ -13,7 +13,7 @@ teardown() {
   sudo -u dokku rm -rf "${APP_DIR:?}"
 }
 
-@test "($PLUGIN_COMMAND_PREFIX:hook) allows write access by default" {
+@test "($PLUGIN_COMMAND_PREFIX:hook-pre-build) allows write access by default" {
   NAME=user1 run $HOOK $APP
   assert_success
 
@@ -21,7 +21,7 @@ teardown() {
   assert_success
 }
 
-@test "($PLUGIN_COMMAND_PREFIX:hook) allows only configured users" {
+@test "($PLUGIN_COMMAND_PREFIX:hook-pre-build) allows only configured users" {
   sudo -u dokku mkdir -p $APP_DIR/acl
   sudo -u dokku touch $APP_DIR/acl/user1
 
@@ -35,7 +35,7 @@ teardown() {
   assert_failure "User admin does not have permissions to modify this repository"
 }
 
-@test "($PLUGIN_COMMAND_PREFIX:hook) allows only superuser when enabled and no configured users" {
+@test "($PLUGIN_COMMAND_PREFIX:hook-pre-build) allows only superuser when enabled and no configured users" {
   export DOKKU_SUPER_USER=admin
 
   NAME=user1 run $HOOK $APP
@@ -45,7 +45,7 @@ teardown() {
   assert_success
 }
 
-@test "($PLUGIN_COMMAND_PREFIX:hook) allows configured users plus superuser when enabled" {
+@test "($PLUGIN_COMMAND_PREFIX:hook-pre-build) allows configured users plus superuser when enabled" {
   export DOKKU_SUPER_USER=admin
   sudo -u dokku mkdir -p $APP_DIR/acl
   sudo -u dokku touch $APP_DIR/acl/user1
