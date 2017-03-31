@@ -85,7 +85,7 @@ case "${1:-}" in
     help_content_func
   else
     cat<<help_desc
-    acl, Plugin for adding the ability to restrict push privileges for app to certain users
+    acl, Plugin to manage app-level Access Control Lists
 help_desc
   fi
     ;;
