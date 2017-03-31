@@ -1,0 +1,16 @@
+help_formatted() {
+  echo -e "Usage: dokku acl[:COMMAND]"
+  echo ''
+  echo 'Manage app-level Access Control Lists.'
+  echo ''
+  echo 'Additional commands:'
+  help_content_func | sort | column -c2 -t -s,
+}
+
+help_content_func() {
+  cat<<help_content
+  acl:add <app> <user>, Allow <user> to push to <app>'s repository
+  acl:remove <app> <user>, Revoke <user>'s access to <app>'s repository
+  acl:list <app>, Show list of users with access to <app>'s repository
+help_content
+}
