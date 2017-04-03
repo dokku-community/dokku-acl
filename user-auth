@@ -33,14 +33,14 @@ for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
 
     APP=$2
     if ! ( verify_app_name "$APP" 2>/dev/null ); then
-      echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+      echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist" >&2
       exit 1
     fi
 
     ACL_FILE="$DOKKU_ROOT/$APP/acl/$SSH_NAME"
     [[ -f "$ACL_FILE" ]] && exit 0
 
-    echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+    echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist" >&2
     exit 1
   fi
 done
