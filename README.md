@@ -45,6 +45,22 @@ Every user has their entry in `~dokku/.ssh/authorized_keys`. Use
 `$NAME` environment variable to define the username. If you add the user
 using `dokku ssh-keys:add`, this will be done automatically for you.
 
+### configuring command line usage
+
+By default, certain dokku commands (e.g. `app:destroy`) won't work when run
+from the command line on the server, if `DOKKU_SUPER_USER` is set, even when
+run as `root` or `dokku`. To avoid confusion, we recommend allowing command
+line access by defining `DOKKU_ACL_ALLOW_COMMAND_LINE` in
+`~dokku/.dokkurc/acl`:
+
+```shell
+export DOKKU_ACL_ALLOW_COMMAND_LINE=1
+```
+
+(The default behaviour exists to prevent security issues for users who were
+depending on the legacy behaviour. We recommend that all users set the
+variable above.)
+
 ### default behavior
 
 By default every user can push to repositories and even create new ones. You can change that by creating an admin
