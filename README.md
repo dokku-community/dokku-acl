@@ -67,6 +67,13 @@ with permission to manage that app.
 
 See the section on secure multi-tenancy for examples.
 
+### read restrictions
+
+By default, users can read (`git pull`, `git clone`, `git archive`)
+from repositories, even when they aren't in the ACL. To prevent this,
+add a per-app command restriction for `git-upload-pack` and
+`git-upload-archive`.
+
 ### secure multi-tenancy
 
 Dokku already provides good isolation functionality between apps: apps are
@@ -111,9 +118,14 @@ export DOKKU_ACL_USER_COMMANDS="help version"
 
 5. Similarly, restrict per-app commands. The authors of this plugin
 currently recommend allowing `logs`, `urls`, `ps:rebuild`,
-`ps:restart`, `ps:stop`, `ps:start`. To do this, add the following
-line to `~dokku/.dokkurc/acl`:
+`ps:restart`, `ps:stop`, `ps:start`, `git-upload-pack`, `git-upload-archive`.
+To do this, add the following line to `~dokku/.dokkurc/acl`:
 
 ```shell
-export DOKKU_ACL_PER_APP_COMMANDS="logs urls ps:rebuild ps:restart ps:stop ps:start"
+export DOKKU_ACL_PER_APP_COMMANDS="logs urls ps:rebuild ps:restart ps:stop ps:start git-upload-pack git-upload-archive"
 ```
+
+This will also prevent users from reading from app repos when they aren't in
+the ACL, which is desireable for security. While apps _should_ be configured
+using the environment, app developers often include secrets in their repos,
+especially with closed source projects.
