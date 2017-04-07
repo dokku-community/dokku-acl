@@ -134,7 +134,8 @@ export DOKKU_ACL_USER_COMMANDS="help version"
 
 5. Similarly, restrict per-app commands. The authors of this plugin
 currently recommend allowing `logs`, `urls`, `ps:rebuild`,
-`ps:restart`, `ps:stop`, `ps:start`, `git-upload-pack`, `git-upload-archive`.
+`ps:restart`, `ps:stop`, `ps:start`, `git-upload-pack`, `git-upload-archive`,
+`git-receive-pack`, `git-hook`.
 To do this, add the following line to `~dokku/.dokkurc/acl`:
 
 ```shell
