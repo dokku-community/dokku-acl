@@ -27,23 +27,19 @@ done
 for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
   if [[ "$CMD" == "$allowed" ]]; then
     if [[ -z "$2" ]]; then
-      echo "An app name is required"
-      exit 1
+      dokku_log_fail "An app name is required"
     fi
 
     APP=$2
     if ! ( verify_app_name "$APP" 2>/dev/null ); then
-      echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist" >&2
-      exit 1
+      dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
     fi
 
     ACL_FILE="$DOKKU_ROOT/$APP/acl/$SSH_NAME"
     [[ -f "$ACL_FILE" ]] && exit 0
 
-    echo "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist" >&2
-    exit 1
+    dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
   fi
 done
 
-echo "User $SSH_NAME does not have permissions to run $CMD"
-exit 1
+dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD"

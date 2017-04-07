@@ -2,6 +2,9 @@
 
 [[ " help acl:help " == *" $1 "* ]] || [[ "$1" == "acl:"* ]] || exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+
 set -u
 
 source "$PLUGIN_AVAILABLE_PATH/acl/functions"
@@ -14,20 +17,17 @@ check_app() {
 
   if [ -z "$app" ];
   then
-    echo "You must provide an app name!" >&2
-    exit;
+    dokku_log_fail "You must provide an app name!"
   fi
 
   if [ ! -d "$DOKKU_ROOT/$app" ];
   then
-    echo "No such app: $app" >&2
-    exit;
+    dokku_log_fail "No such app: $app"
   fi
 
   if [ -n "${NAME:-}" ];
   then
-    echo "You can only modify ACL using local dokku command on target host" >&2
-    exit;
+    dokku_log_fail "You can only modify ACL using local dokku command on target host"
   fi
 }
 
@@ -39,8 +39,7 @@ case "${1:-}" in
 
     if [ -z "$USER" ];
     then
-      echo "Please specify a user name" >&2
-      exit 1;
+      dokku_log_fail "Please specify a user name"
     fi
 
     [ ! -d "$ACL_PATH" ] && mkdir "$ACL_PATH";
@@ -48,7 +47,7 @@ case "${1:-}" in
     ACL_FILE="$ACL_PATH/$USER"
     if [ -f "$ACL_FILE" ];
     then
-       echo "User already has permissions to push to this repository"
+       echo "User already has permissions to push to this repository" >&2
        exit 2;
     fi
     touch "$ACL_FILE"
@@ -59,8 +58,7 @@ case "${1:-}" in
 
     if [ -z "$USER" ];
     then
-      echo "Please specify a user name" >&2
-      exit 1;
+      dokku_log_fail "Please specify a user name"
     fi
 
     ACL_FILE="$ACL_PATH/"$(basename "$USER");
