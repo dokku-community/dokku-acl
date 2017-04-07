@@ -9,29 +9,26 @@ source "$PLUGIN_AVAILABLE_PATH/acl/functions"
 APP=${2:-}
 ACL_PATH="$DOKKU_ROOT/$APP/acl"
 
-check_app () {
-  if [ -z "$1" ];
+check_app() {
+  declare app="$1"
+
+  if [ -z "$app" ];
   then
     echo "You must provide an app name!" >&2
-    echo 1;
     exit;
   fi
 
-  if [ ! -d "$DOKKU_ROOT/$1" ];
+  if [ ! -d "$DOKKU_ROOT/$app" ];
   then
-    echo "No such app: $1" >&2
-    echo 2;
+    echo "No such app: $app" >&2
     exit;
   fi
 
   if [ -n "${NAME:-}" ];
   then
     echo "You can only modify ACL using local dokku command on target host" >&2
-    echo 3;
     exit;
   fi
-
-  echo 0
 }
 
 check_admin () {
@@ -40,7 +37,7 @@ check_admin () {
 
 case "${1:-}" in
   acl:add)
-    test "$(check_app "$APP")" -eq 0;
+    check_app "$APP"
 
     USER=${3:-}
 
@@ -61,7 +58,7 @@ case "${1:-}" in
     touch "$ACL_FILE"
     ;;
   acl:remove)
-    test "$(check_app "$APP")" -eq 0;
+    check_app "$APP"
     USER=${3:-}
 
     if [ -z "$USER" ];
