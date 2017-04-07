@@ -31,10 +31,6 @@ check_app() {
   fi
 }
 
-check_admin () {
-  echo 1
-}
-
 case "${1:-}" in
   acl:add)
     check_app "$APP"
