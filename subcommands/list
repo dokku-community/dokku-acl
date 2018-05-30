@@ -11,10 +11,9 @@ cmd-acl-list() {
   declare desc="show list of users with access to <app>"
   local cmd="$PLUGIN_COMMAND_PREFIX:list" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1"
-  local ACL_PATH="$DOKKU_ROOT/$APP/acl"
 
   fn-acl-check-app "$APP"
-  [[ -n "$APP" ]] && ls -1 "$ACL_PATH" >&2  2>/dev/null
+  [[ -n "$APP" ]] && ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null
 }
 
 cmd-acl-list "$@"
