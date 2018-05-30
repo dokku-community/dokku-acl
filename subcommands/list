@@ -6,8 +6,7 @@ source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-func
 
 cmd-acl-list() {
   declare desc="show list of users with access to <app>"
-  declare cmd="acl:list"
-  [[ "$1" == "$cmd" ]] && shift 1
+  local cmd="$PLUGIN_COMMAND_PREFIX:list" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1"
   local ACL_PATH="$DOKKU_ROOT/$APP/acl"
 

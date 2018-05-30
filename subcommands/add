@@ -6,8 +6,7 @@ source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-func
 
 cmd-acl-add() {
   declare desc="allow <user> to push to <app>'s repository"
-  declare cmd="acl:add"
-  [[ "$1" == "$cmd" ]] && shift 1
+  local cmd="$PLUGIN_COMMAND_PREFIX:add" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1" USER="$2"
   local ACL_PATH="$DOKKU_ROOT/$APP/acl"
   local ACL_FILE="$ACL_PATH/$USER"
