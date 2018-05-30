@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+source "$PLUGIN_AVAILABLE_PATH/acl/internal-functions"
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+
+cmd-acl-report() {
+  #E show the acl report for all  apps
+  #E dokku $PLUGIN_COMMAND_PREFIX:report
+  #A app, app to run command against
+  declare APP="$1"
+
+  cmd-acl-report-all "$@"
+}
