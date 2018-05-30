@@ -33,8 +33,9 @@ ci-dependencies: shellcheck bats readlink
 lint:
 	# these are disabled due to their expansive existence in the codebase. we should clean it up though
 	# SC1090: Can't follow non-constant source. Use a directive to specify location.
+	# SC2034: VAR appears unused - https://github.com/koalaman/shellcheck/wiki/SC2034
 	@echo linting...
-	@$(QUIET) find ./ -maxdepth 1 -not -path '*/\.*' | xargs file | egrep "shell|bash" | awk '{ print $$1 }' | sed 's/://g' | xargs shellcheck -e SC1090
+	@$(QUIET) find ./ -maxdepth 1 -not -path '*/\.*' | xargs file | egrep "shell|bash" | awk '{ print $$1 }' | sed 's/://g' | xargs shellcheck -e SC1090,SC2034
 
 unit-tests:
 	@echo running unit tests...
