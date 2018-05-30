@@ -5,6 +5,10 @@ source "$PLUGIN_BASE_PATH/common/functions"
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
 
 cmd-acl-add() {
+  #E allow the admin user access to the lolipop app
+  #E dokku $PLUGIN_COMMAND_PREFIX:add lolipop admin
+  #A app, app to run command against
+  #A user, a user to allow access
   declare desc="allow <user> to push to <app>'s repository"
   local cmd="$PLUGIN_COMMAND_PREFIX:add" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1" USER="$2"
