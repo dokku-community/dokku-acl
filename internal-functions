@@ -6,8 +6,8 @@ set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 cmd-acl-report-all() {
   declare desc="displays a acl report for one or more apps"
   local cmd="acl:report"
-  local INSTALLED_APPS=$(dokku_apps)
-  local APP="$2" INFO_FLAG="$3"
+  local APP="$1" INFO_FLAG="$2"
+  local INSTALLED_APPS
 
   if [[ -n "$APP" ]] && [[ "$APP" == --* ]]; then
     INFO_FLAG="$APP"
@@ -19,6 +19,7 @@ cmd-acl-report-all() {
   fi
 
   if [[ -z "$APP" ]]; then
+    INSTALLED_APPS=$(dokku_apps)
     for app in $INSTALLED_APPS; do
       cmd-acl-report-single "$app" "$INFO_FLAG" | tee || true
     done
