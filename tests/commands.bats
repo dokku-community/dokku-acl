@@ -10,7 +10,7 @@ setup() {
 }
 
 teardown() {
-  dokku --force apps:destroy acl-test-app >&2
+  sudo -u $DOKKU_SYSTEM_USER rm -rf "${APP_DIR:?}"
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:add) can add a user to an ACL" {

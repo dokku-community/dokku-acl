@@ -18,7 +18,7 @@ setup() {
 }
 
 teardown() {
-  dokku --force apps:destroy acl-test-app >&2
+  sudo -u $DOKKU_SYSTEM_USER rm -rf "${APP_DIR:?}"
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:hook-user-auth) allows all commands by default" {
