@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+export PLUGIN_UNIMPLEMENTED_SUBCOMMANDS=()
+export PLUGIN_COMMAND_PREFIX="acl"
+export PLUGIN_BASE_PATH="$PLUGIN_PATH"
+if [[ -n $DOKKU_API_VERSION ]]; then
+  export PLUGIN_BASE_PATH="$PLUGIN_ENABLED_PATH"
+fi
