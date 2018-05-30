@@ -22,8 +22,8 @@ teardown() {
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:hook-pre-build) allows only configured users" {
-  sudo -u dokku mkdir -p $APP_DIR/acl
-  sudo -u dokku touch $APP_DIR/acl/user1
+  sudo -u $DOKKU_SYSTEM_USER mkdir -p $APP_DIR/acl
+  sudo -u $DOKKU_SYSTEM_USER touch $APP_DIR/acl/user1
 
   NAME=user1 run $HOOK $APP
   assert_success
@@ -47,8 +47,8 @@ teardown() {
 
 @test "($PLUGIN_COMMAND_PREFIX:hook-pre-build) allows configured users plus superuser when enabled" {
   export DOKKU_SUPER_USER=admin
-  sudo -u dokku mkdir -p $APP_DIR/acl
-  sudo -u dokku touch $APP_DIR/acl/user1
+  sudo -u $DOKKU_SYSTEM_USER mkdir -p $APP_DIR/acl
+  sudo -u $DOKKU_SYSTEM_USER touch $APP_DIR/acl/user1
 
   NAME=user1 run $HOOK $APP
   assert_success
@@ -81,8 +81,8 @@ teardown() {
 
   # App ACL exists, no DOKKU_SUPER_USER -> success
   unset DOKKU_SUPER_USER
-  sudo -u dokku mkdir -p $APP_DIR/acl
-  sudo -u dokku touch $APP_DIR/acl/user1
+  sudo -u $DOKKU_SYSTEM_USER mkdir -p $APP_DIR/acl
+  sudo -u $DOKKU_SYSTEM_USER touch $APP_DIR/acl/user1
 
   SSH_NAME=default run $HOOK $APP
   assert_success
@@ -116,8 +116,8 @@ teardown() {
 
   # App ACL exists, no DOKKU_SUPER_USER -> success
   unset DOKKU_SUPER_USER
-  sudo -u dokku mkdir -p $APP_DIR/acl
-  sudo -u dokku touch $APP_DIR/acl/user1
+  sudo -u $DOKKU_SYSTEM_USER mkdir -p $APP_DIR/acl
+  sudo -u $DOKKU_SYSTEM_USER touch $APP_DIR/acl/user1
 
   run $HOOK $APP
   assert_success

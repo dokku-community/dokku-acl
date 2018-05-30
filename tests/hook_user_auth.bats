@@ -49,8 +49,8 @@ teardown() {
 
 @test "($PLUGIN_COMMAND_PREFIX:hook-user-auth) allows per-app commands only for users in the app ACL" {
   export DOKKU_ACL_PER_APP_COMMANDS="$PER_APP_CMDS"
-  sudo -u dokku mkdir -p $APP_DIR/acl
-  sudo -u dokku touch $APP_DIR/acl/user1
+  sudo -u $DOKKU_SYSTEM_USER mkdir -p $APP_DIR/acl
+  sudo -u $DOKKU_SYSTEM_USER touch $APP_DIR/acl/user1
 
   for cmd in $PER_APP_CMDS; do
     run $HOOK dokku user1 $cmd acl-test-app
