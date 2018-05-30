@@ -3,9 +3,13 @@ source "$PLUGIN_AVAILABLE_PATH/acl/internal-functions"
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 cmd-acl-report() {
-  #E show the acl report for all  apps
+  #E displays a git report for all apps
   #E dokku $PLUGIN_COMMAND_PREFIX:report
+  #E displays a git report for one app
+  #E dokku $PLUGIN_COMMAND_PREFIX:report lolipop
   #A app, app to run command against
+  declare desc="displays a git report for one or more apps"
+  local cmd="$PLUGIN_COMMAND_PREFIX:report" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1"
 
   cmd-acl-report-all "$@"
