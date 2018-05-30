@@ -34,7 +34,7 @@ cmd-acl-report-single() {
   fi
   verify_app_name "$APP"
   local flag_map=(
-    "--acl-allowed-users: $(ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null)"
+    "--acl-allowed-users: $(ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null || true)"
     "--acl-global-allow-command-line: $DOKKU_ACL_ALLOW_COMMAND_LINE"
     "--acl-global-super-user: $DOKKU_SUPER_USER"
     "--acl-global-user-commands: $DOKKU_ACL_USER_COMMANDS"
