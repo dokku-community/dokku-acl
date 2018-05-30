@@ -7,8 +7,7 @@ source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-func
 cmd-acl-remove() {
   declare desc="revoke <user>'s access to <app>"
   declare cmd="acl:remove"
-  [[ "$1" == "$cmd" ]] && shift 1
-  declare APP="$1" USER="$2"
+  local cmd="$PLUGIN_COMMAND_PREFIX:remove" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   local ACL_PATH="$DOKKU_ROOT/$APP/acl"
   local ACL_FILE="$ACL_PATH/$USER"
 
