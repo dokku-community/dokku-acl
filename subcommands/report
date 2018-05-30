@@ -16,3 +16,5 @@ cmd-acl-report() {
 
   cmd-acl-report-all "$@"
 }
+
+cmd-acl-report "$@"
