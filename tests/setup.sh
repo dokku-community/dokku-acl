@@ -18,6 +18,11 @@ if grep go-build Makefile > /dev/null; then
 fi
 cd -
 
+test -f /etc/init.d/nginx || {
+  sudo touch /etc/init.d/nginx
+  sudo chmod +x /etc/init.d/nginx
+}
+
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
 rm -rf $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX
 mkdir -p $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands
