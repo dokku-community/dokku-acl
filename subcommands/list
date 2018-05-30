@@ -13,6 +13,7 @@ cmd-acl-list() {
   declare APP="$1"
 
   if [[ -z "$APP" ]]; then
+    local INSTALLED_APPS=$(dokku_apps)
     for app in $INSTALLED_APPS; do
       fn-acl-check-app "$APP"
       dokku_log_info2_quiet "${APP} acl list"
