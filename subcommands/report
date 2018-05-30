@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-source "$PLUGIN_AVAILABLE_PATH/acl/internal-functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
 
 cmd-acl-report() {
   #E displays a git report for all apps
