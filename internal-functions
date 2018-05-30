@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+
+fn-acl-check-app() {
+  declare APP="$1"
+
+  verify_app_name "$APP"
+
+  if [[ -n "${NAME:-}" ]]; then
+    dokku_log_fail "You can only modify ACL using local dokku command on target host"
+  fi
+}

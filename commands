@@ -1,86 +1,9 @@
 #!/usr/bin/env bash
-
-[[ " help acl:help " == *" $1 "* ]] || [[ "$1" == "acl:"* ]] || exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config"
+[[ " help $PLUGIN_COMMAND_PREFIX:help $PLUGIN_COMMAND_PREFIX $PLUGIN_COMMAND_PREFIX:default " == *" $1 "* ]] || [[ "$1" == "$PLUGIN_COMMAND_PREFIX:"* ]] || exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
+source "$PLUGIN_BASE_PATH/common/functions"
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
-source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/help-functions"
 
-set -u
-
-source "$PLUGIN_AVAILABLE_PATH/acl/functions"
-
-APP=${2:-}
-ACL_PATH="$DOKKU_ROOT/$APP/acl"
-
-check_app() {
-  declare app="$1"
-
-  if [ -z "$app" ];
-  then
-    dokku_log_fail "You must provide an app name!"
-  fi
-
-  if [ ! -d "$DOKKU_ROOT/$app" ];
-  then
-    dokku_log_fail "No such app: $app"
-  fi
-
-  if [ -n "${NAME:-}" ];
-  then
-    dokku_log_fail "You can only modify ACL using local dokku command on target host"
-  fi
-}
-
-case "${1:-}" in
-  acl:add)
-    check_app "$APP"
-
-    USER=${3:-}
-
-    if [ -z "$USER" ];
-    then
-      dokku_log_fail "Please specify a user name"
-    fi
-
-    [ ! -d "$ACL_PATH" ] && mkdir "$ACL_PATH";
-
-    ACL_FILE="$ACL_PATH/$USER"
-    if [ -f "$ACL_FILE" ];
-    then
-       echo "User already has permissions to push to this repository" >&2
-       exit 2;
-    fi
-    touch "$ACL_FILE"
-    ;;
-  acl:remove)
-    check_app "$APP"
-    USER=${3:-}
-
-    if [ -z "$USER" ];
-    then
-      dokku_log_fail "Please specify a user name"
-    fi
-
-    ACL_FILE="$ACL_PATH/"$(basename "$USER");
-    [ -f "$ACL_FILE" ] && rm "$ACL_FILE";
-    [ -d "$ACL_PATH" ] && [ -z "$(ls "$ACL_PATH")" ] && rmdir "$ACL_PATH";
-
-    ;;
-  acl:list)
-    [ -n "$APP" ] && ls -1 "$DOKKU_ROOT/$APP/acl" >&2  2>/dev/null;
-    ;;
-  help | acl:help)
-  if [[ $1 = "acl:help" ]] ; then
-    help_formatted
-  elif [[ $(ps -o command= $PPID) == *"--all"* ]]; then
-    help_content_func
-  else
-    cat<<help_desc
-    acl, Plugin to manage app-level Access Control Lists
-help_desc
-  fi
-    ;;
-  *)
-    exit "$DOKKU_NOT_IMPLEMENTED_EXIT"
-    ;;
-esac
+fn-help "$@"
