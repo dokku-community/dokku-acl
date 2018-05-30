@@ -12,8 +12,16 @@ cmd-acl-list() {
   local cmd="$PLUGIN_COMMAND_PREFIX:list" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1"
 
-  fn-acl-check-app "$APP"
-  [[ -n "$APP" ]] && ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null
+  if [[ -z "$APP" ]]; then
+    for app in $INSTALLED_APPS; do
+      fn-acl-check-app "$APP"
+      dokku_log_info2_quiet "${APP} acl list"
+      ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null
+    done
+  else
+    fn-acl-check-app "$APP"
+    ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null
+  fi
 }
 
 cmd-acl-list "$@"
