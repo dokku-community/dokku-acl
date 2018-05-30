@@ -1,2 +1,5 @@
-tests/bin
 tests/dokku
+tests/fixtures
+tests/bin/plugn
+tests/bin/readlink
+.vagrant
