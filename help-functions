@@ -48,7 +48,7 @@ fn-help-all() {
     echo ''
     echo -e "${BLUE}Example:${NORMAL}"
     echo ''
-    echo "    \$ dokku $PLUGIN_COMMAND_PREFIX:list"
+    echo "    \$ dokku $PLUGIN_COMMAND_PREFIX:list lolipop"
     echo ''
     fn-help-list-example | column -c5 -t -s,
     echo ''
@@ -145,8 +145,7 @@ fn-help-list-example() {
   # shellcheck disable=SC2034
   declare desc="return $PLUGIN_COMMAND_PREFIX plugin help content"
   cat<<help_list
-      NAME, VERSION, STATUS, EXPOSED PORTS, LINKS
-      service-name, $PLUGIN_COMMAND_PREFIX:$PLUGIN_IMAGE_VERSION, running, -, app-name
+      admin other-user
 help_list
 }
 
