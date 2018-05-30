@@ -1,18 +1,29 @@
 #!/usr/bin/env bash -x
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/test_helper.bash"
 
 BIN_STUBS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin"
-mkdir -p $BIN_STUBS
 
 if [[ ! -d $DOKKU_ROOT ]]; then
-  git clone https://github.com/progrium/dokku.git $DOKKU_ROOT > /dev/null
+  git clone https://github.com/dokku/dokku.git $DOKKU_ROOT > /dev/null
 fi
 
 cd $DOKKU_ROOT
 echo "Dokku version $DOKKU_VERSION"
 git checkout $DOKKU_VERSION > /dev/null
+if grep go-build Makefile > /dev/null; then
+  mv "$BIN_STUBS/docker" "$BIN_STUBS/docker-stub"
+  make go-build
+  mv "$BIN_STUBS/docker-stub" "$BIN_STUBS/docker"
+fi
 cd -
 
+test -f /etc/init.d/nginx || {
+  sudo touch /etc/init.d/nginx
+  sudo chmod +x /etc/init.d/nginx
+}
+
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
 rm -rf $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX
 mkdir -p $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands
 find ./ -maxdepth 1 -type f -exec cp '{}' $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX \;
