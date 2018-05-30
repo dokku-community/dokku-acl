@@ -30,8 +30,8 @@ teardown() {
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:remove) can remove a user from an ACL" {
-  sudo -u dokku mkdir -p $APP_DIR/acl
-  sudo -u dokku touch $APP_DIR/acl/user1
+  sudo -u $DOKKU_SYSTEM_USER mkdir -p $APP_DIR/acl
+  sudo -u $DOKKU_SYSTEM_USER touch $APP_DIR/acl/user1
 
   run dokku acl:remove $APP user1
   assert_success
