@@ -5,6 +5,7 @@
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"
 
 DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 DOKKU_ACL_USER_COMMANDS="${DOKKU_ACL_USER_COMMANDS:-}"
@@ -30,15 +31,7 @@ for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
       dokku_log_fail "An app name is required"
     fi
 
-    APP=$2
-    if ! ( verify_app_name "$APP" 2>/dev/null ); then
-      dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
-    fi
-
-    ACL_FILE="$DOKKU_ROOT/$APP/acl/$SSH_NAME"
-    [[ -f "$ACL_FILE" ]] && exit 0
-
-    dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+    fn-check-app-acl "$2" "$SSH_NAME" && exit 0
   fi
 done
 
