@@ -89,3 +89,20 @@ fn-check-app-acl() {
 
   dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
 }
+
+fn-check-service-acl() {
+  declare desc="Checks if the current user has an ACL entry for the service"
+  declare CMD="$1" SERVICE="$2" SSH_NAME="$3"
+
+  local SERVICE_TYPE="${CMD%%:*}"
+  local SERVICE_PATH="$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE"
+  local ACL_FILE="$SERVICE_PATH/acl/$SSH_NAME"
+
+  if ! [[ -d $SERVICE_PATH ]]; then
+    dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $SERVICE, or $SERVICE does not exist"
+  fi
+
+  [[ -f "$ACL_FILE" ]] && return 0
+
+  dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $SERVICE, or $SERVICE does not exist"
+}

@@ -10,12 +10,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"
 DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 DOKKU_ACL_USER_COMMANDS="${DOKKU_ACL_USER_COMMANDS:-}"
 DOKKU_ACL_PER_APP_COMMANDS="${DOKKU_ACL_PER_APP_COMMANDS:-}"
+DOKKU_ACL_PER_SERVICE_COMMANDS="${DOKKU_ACL_PER_SERVICE_COMMANDS:-}"
 
 SSH_USER=$1
 SSH_NAME=$2
 shift 2
 
-[[ -z "$DOKKU_ACL_USER_COMMANDS" && -z "$DOKKU_ACL_PER_APP_COMMANDS" ]] && exit 0
+[[ -z "$DOKKU_ACL_USER_COMMANDS" && -z "$DOKKU_ACL_PER_APP_COMMANDS" && -z "$DOKKU_ACL_PER_SERVICE_COMMANDS" ]] && exit 0
 [[ "$SSH_USER" == "root" ]] && exit 0
 [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$SSH_NAME" == "$DOKKU_SUPER_USER" ]] && exit 0
 
@@ -32,6 +33,16 @@ for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
     fi
 
     fn-check-app-acl "$2" "$SSH_NAME" && exit 0
+  fi
+done
+
+for allowed in $DOKKU_ACL_PER_SERVICE_COMMANDS; do
+  if [[ "$CMD" == "$allowed" ]]; then
+    if [[ -z "$2" ]]; then
+      dokku_log_fail "A service name is required"
+    fi
+
+    fn-check-service-acl "$CMD" "$2" "$SSH_NAME" && exit 0
   fi
 done
 
