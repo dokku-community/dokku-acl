@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
+
+cmd-acl-list-service() {
+  #E show users that have access to the birds redis service
+  #E dokku $PLUGIN_COMMAND_PREFIX:list redis birds
+  #A type, type of service
+  #A service, service to run command against
+  declare desc="show list of users with access to <service> of type <type>"
+  local cmd="$PLUGIN_COMMAND_PREFIX:list-service" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
+  declare SERVICE_TYPE="$1" SERVICE="$2"
+
+  fn-acl-check-service "$SERVICE_TYPE" "$SERVICE"
+
+  local ACL_PATH="$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE/acl"
+  ls -1 "$ACL_PATH" >&2 2>/dev/null || true
+}
+
+cmd-acl-list-service "$@"

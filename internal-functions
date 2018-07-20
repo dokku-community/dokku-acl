@@ -76,6 +76,19 @@ fn-acl-check-app() {
   fi
 }
 
+fn-acl-check-service() {
+  declare SERVICE_TYPE="$1" SERVICE="$2"
+
+  local SERVICE_PATH="$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE"
+  if ! [[ -d $SERVICE_PATH ]]; then
+    dokku_log_fail "Service $SERVICE of type $SERVICE_TYPE does not exist"
+  fi
+
+  if [[ -n "${NAME:-}" ]]; then
+    dokku_log_fail "You can only modify ACL using local dokku command on target host"
+  fi
+}
+
 fn-check-app-acl() {
   declare desc="Checks if the current user has an ACL entry for the app"
   declare APP="$1" SSH_NAME="$2"
