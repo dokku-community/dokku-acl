@@ -26,6 +26,10 @@ dokku plugin:install https://github.com/dokku-community/dokku-acl.git acl
 acl:add <app> <user>      Allow <user> to access <app>
 acl:list <app>            Show list of users with access to <app>
 acl:remove <app> <user>   Revoke <user>'s access to <app>
+
+acl:add-service <type> <service> <user>      Allow <user> to access <service> of type <type>
+acl:list-service <type> <service>            Show list of users with access to <service> of type <type>
+acl:remove-service <type> <service> <user>   Revoke <user>'s access to <service> of type <type>
 ```
 
 ## usage
@@ -76,10 +80,14 @@ If defined, this user is always allowed to push, and no other users are allowed 
 
 By default, all users can run all dokku commands. To restrict the commands
 available to non-admin users, whitelist the desired commands in
-`~dokku/.dokkurc/acl`. Two lists of commands can be defined:
-commands in `$DOKKU_ACL_USER_COMMANDS` can be run by any user at any time,
-and commands in `$DOKKU_ACL_PER_APP_COMMANDS` can be run on an app by any user
+`~dokku/.dokkurc/acl`. The following lists of commands can be defined:
+* Commands in `$DOKKU_ACL_USER_COMMANDS` can be run by any user at any time
+* Commands in `$DOKKU_ACL_PER_APP_COMMANDS` can be run on an app by any user
 with permission to manage that app.
+* Commands in `$DOKKU_ACL_PER_SERVICE_COMMANDS` can be run on any service by
+any user with permission to manage that service.
+* Commands in `$DOKKU_ACL_LINK_COMMANDS` can be run by any user with permission
+to manage both the service and the app being linked.
 
 See the section on secure multi-tenancy for examples.
 

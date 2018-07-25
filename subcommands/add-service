@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
+set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
+
+cmd-acl-add-service() {
+  #E allow the servuser user access to the birds Redis service
+  #E dokku $PLUGIN_COMMAND_PREFIX:add-service redis birds servuser
+  #A type, type of service
+  #A service, service to run command against
+  #A user, a user to allow access
+  declare desc="allow <user> to control <service> of type <type>"
+  local cmd="$PLUGIN_COMMAND_PREFIX:add-service" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
+  declare SERVICE_TYPE="$1" SERVICE="$2" USER="$3"
+
+  fn-acl-check-service "$SERVICE_TYPE" "$SERVICE"
+
+  local ACL_PATH="$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE/acl"
+  local ACL_FILE="$ACL_PATH/$USER"
+
+  if [[ -z "$USER" ]]; then
+    dokku_log_fail "Please specify a user name"
+  fi
+
+  [[ ! -d "$ACL_PATH" ]] && mkdir -p "$ACL_PATH"
+
+  if [[ -f "$ACL_FILE" ]]; then
+     echo "User already has permissions to push to this repository" >&2
+     exit 2;
+  fi
+
+  touch "$ACL_FILE"
+}
+
+cmd-acl-add-service "$@"

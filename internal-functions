@@ -75,3 +75,47 @@ fn-acl-check-app() {
     dokku_log_fail "You can only modify ACL using local dokku command on target host"
   fi
 }
+
+fn-acl-check-service() {
+  declare SERVICE_TYPE="$1" SERVICE="$2"
+
+  local SERVICE_PATH="$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE"
+  if ! [[ -d $SERVICE_PATH ]]; then
+    dokku_log_fail "Service $SERVICE of type $SERVICE_TYPE does not exist"
+  fi
+
+  if [[ -n "${NAME:-}" ]]; then
+    dokku_log_fail "You can only modify ACL using local dokku command on target host"
+  fi
+}
+
+fn-check-app-acl() {
+  declare desc="Checks if the current user has an ACL entry for the app"
+  declare APP="$1" SSH_NAME="$2"
+  local ACL_FILE="$DOKKU_ROOT/$APP/acl/$SSH_NAME"
+
+  if ! ( verify_app_name "$APP" 2>/dev/null ); then
+    dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+  fi
+
+  [[ -f "$ACL_FILE" ]] && return 0
+
+  dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+}
+
+fn-check-service-acl() {
+  declare desc="Checks if the current user has an ACL entry for the service"
+  declare CMD="$1" SERVICE="$2" SSH_NAME="$3"
+
+  local SERVICE_TYPE="${CMD%%:*}"
+  local SERVICE_PATH="$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE"
+  local ACL_FILE="$SERVICE_PATH/acl/$SSH_NAME"
+
+  if ! [[ -d $SERVICE_PATH ]]; then
+    dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $SERVICE, or $SERVICE does not exist"
+  fi
+
+  [[ -f "$ACL_FILE" ]] && return 0
+
+  dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $SERVICE, or $SERVICE does not exist"
+}

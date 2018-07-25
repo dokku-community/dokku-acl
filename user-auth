@@ -5,16 +5,19 @@
 set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
 
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"
 
 DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 DOKKU_ACL_USER_COMMANDS="${DOKKU_ACL_USER_COMMANDS:-}"
 DOKKU_ACL_PER_APP_COMMANDS="${DOKKU_ACL_PER_APP_COMMANDS:-}"
+DOKKU_ACL_PER_SERVICE_COMMANDS="${DOKKU_ACL_PER_SERVICE_COMMANDS:-}"
+DOKKU_ACL_LINK_COMMANDS="${DOKKU_ACL_LINK_COMMANDS:-}"
 
 SSH_USER=$1
 SSH_NAME=$2
 shift 2
 
-[[ -z "$DOKKU_ACL_USER_COMMANDS" && -z "$DOKKU_ACL_PER_APP_COMMANDS" ]] && exit 0
+[[ -z "$DOKKU_ACL_USER_COMMANDS" && -z "$DOKKU_ACL_PER_APP_COMMANDS" && -z "$DOKKU_ACL_PER_SERVICE_COMMANDS" && -z "$DOKKU_ACL_LINK_COMMANDS" ]] && exit 0
 [[ "$SSH_USER" == "root" ]] && exit 0
 [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$SSH_NAME" == "$DOKKU_SUPER_USER" ]] && exit 0
 
@@ -30,15 +33,34 @@ for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
       dokku_log_fail "An app name is required"
     fi
 
-    APP=$2
-    if ! ( verify_app_name "$APP" 2>/dev/null ); then
-      dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+    fn-check-app-acl "$2" "$SSH_NAME" && exit 0
+  fi
+done
+
+for allowed in $DOKKU_ACL_PER_SERVICE_COMMANDS; do
+  if [[ "$CMD" == "$allowed" ]]; then
+    if [[ -z "$2" ]]; then
+      dokku_log_fail "A service name is required"
     fi
 
-    ACL_FILE="$DOKKU_ROOT/$APP/acl/$SSH_NAME"
-    [[ -f "$ACL_FILE" ]] && exit 0
+    fn-check-service-acl "$CMD" "$2" "$SSH_NAME" && exit 0
+  fi
+done
 
-    dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
+for allowed in $DOKKU_ACL_LINK_COMMANDS; do
+  if [[ "$CMD" == "$allowed" ]]; then
+    if [[ -z "$2" ]]; then
+      dokku_log_fail "A service name is required"
+    fi
+
+    if [[ -z "$3" ]]; then
+      dokku_log_fail "An app name is required"
+    fi
+
+    (fn-check-service-acl "$CMD" "$2" "$SSH_NAME") && (fn-check-app-acl "$3" "$SSH_NAME") && exit 0
+
+    # An appropriate failure message has already been sent by the check- function
+    exit 1
   fi
 done
 
