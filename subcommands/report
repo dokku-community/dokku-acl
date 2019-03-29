@@ -5,12 +5,12 @@ source "$PLUGIN_BASE_PATH/common/functions"
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
 
 cmd-acl-report() {
-  #E displays a git report for all apps
+  #E displays a acl report for all apps
   #E dokku $PLUGIN_COMMAND_PREFIX:report
-  #E displays a git report for one app
+  #E displays a acl report for one app
   #E dokku $PLUGIN_COMMAND_PREFIX:report lolipop
   #A app, app to run command against
-  declare desc="displays a git report for one or more apps"
+  declare desc="displays a acl report for one or more apps"
   local cmd="$PLUGIN_COMMAND_PREFIX:report" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1"
 
