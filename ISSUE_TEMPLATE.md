@@ -1,0 +1,33 @@
+> If you're using Dokku - especially for commercial purposes - consider donating to project development via [OpenCollective](https://opencollective.com/dokku) or [Patreon](https://www.patreon.com/dokku). Funds go to general development, support, and infrastructure costs.
+>
+> If you need help figuring out how to use a specific buildpack, or are having issues using multiple buildpacks, please see our [irc or slack channels](http://dokku.viewdocs.io/dokku/getting-started/where-to-get-help/#the-irc-and-slack-channels). Issues pertaining to buildpacks may be closed and locked.
+
+## Description of problem
+
+### How reproducible
+
+### Steps to Reproduce
+
+1.
+2.
+3.
+
+#### Actual Results
+
+#### Expected Results
+
+## Environment Information
+
+### `dokku report` output
+
+> This is required! Issues missing this information may be closed.
+>
+> For problems affecting all applications, the report output for a broken application is useful for our debugging.
+> You may also run `dokku report` without any arguments to display the top-level reporting information.
+
+### How (deb/make/rpm) and where (AWS, VirtualBox, physical, etc.) was Dokku installed?:
+
+### Additional information
+
+- Output of failing Dokku commands after running `dokku trace on`
+  (BEWARE: `trace on` will print environment variables for some commands, be sure you're not exposing any sensitive information when posting issues. You may replace these values with XXXXXXX):
