@@ -3,6 +3,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config"
 set -eo pipefail
 [[ $DOKKU_TRACE ]] && set -x
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common-functions"
+# shellcheck disable=SC2155
 export SUBCOMMAND_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/subcommands"
 
 fn-help() {
@@ -177,6 +178,7 @@ fn-help-subcommand-args() {
     NORMAL="$(fn-help-fancy-color "\033[m")"
   fi
   argline=$(grep declare "$FUNC_FILE" | grep -v "declare desc" | head -1 || true)
+  # shellcheck disable=SC2207
   arglist=($(echo -e "${argline// /"\n"}" | awk -F= '/=/{print ""$1""}'))
   args=""
   argpos=0
