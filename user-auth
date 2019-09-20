@@ -2,7 +2,8 @@
 # When enabled via the DOKKU_ACL_USER_COMMANDS variable, allow normal users
 # to run only these commands.
 
-set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
 
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"

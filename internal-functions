@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
-set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
 
 cmd-acl-report-all() {
   declare desc="displays a acl report for one or more apps"
@@ -48,7 +49,8 @@ cmd-acl-report-single() {
       dokku_log_verbose "$(printf "%-30s %-25s" "${key^}" "${flag#*: }")"
     done
   else
-    local match=false; local value_exists=false
+    local match=false
+    local value_exists=false
     for flag in "${flag_map[@]}"; do
       valid_flags="${valid_flags} $(echo "$flag" | cut -d':' -f1)"
       if [[ "$flag" == "${INFO_FLAG}:"* ]]; then
@@ -94,7 +96,7 @@ fn-check-app-acl() {
   declare APP="$1" SSH_NAME="$2"
   local ACL_FILE="$DOKKU_ROOT/$APP/acl/$SSH_NAME"
 
-  if ! ( verify_app_name "$APP" 2>/dev/null ); then
+  if ! (verify_app_name "$APP" 2>/dev/null); then
     dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $APP, or $APP does not exist"
   fi
 

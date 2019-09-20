@@ -1,17 +1,18 @@
 #!/usr/bin/env bash -x
-set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/test_helper.bash"
 
 BIN_STUBS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin"
 
 if [[ ! -d $DOKKU_ROOT ]]; then
-  git clone https://github.com/dokku/dokku.git $DOKKU_ROOT > /dev/null
+  git clone https://github.com/dokku/dokku.git $DOKKU_ROOT >/dev/null
 fi
 
 cd $DOKKU_ROOT
 echo "Dokku version $DOKKU_VERSION"
-git checkout $DOKKU_VERSION > /dev/null
-if grep go-build Makefile > /dev/null; then
+git checkout $DOKKU_VERSION >/dev/null
+if grep go-build Makefile >/dev/null; then
   mv "$BIN_STUBS/docker" "$BIN_STUBS/docker-stub"
   make go-build
   mv "$BIN_STUBS/docker-stub" "$BIN_STUBS/docker"
@@ -28,7 +29,7 @@ rm -rf $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX
 mkdir -p $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands
 find ./ -maxdepth 1 -type f -exec cp '{}' $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX \;
 find ./subcommands -maxdepth 1 -type f -exec cp '{}' $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands \;
-echo "$DOKKU_VERSION" > $DOKKU_ROOT/VERSION
+echo "$DOKKU_VERSION" >$DOKKU_ROOT/VERSION
 
 if [[ ! -f $BIN_STUBS/plugn ]]; then
   wget -O- "$PLUGN_URL" | tar xzf - -C "$BIN_STUBS"

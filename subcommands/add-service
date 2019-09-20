@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
-set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
 source "$PLUGIN_BASE_PATH/common/functions"
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
 
@@ -11,7 +12,8 @@ cmd-acl-add-service() {
   #A service, service to run command against
   #A user, a user to allow access
   declare desc="allow <user> to control <service> of type <type>"
-  local cmd="$PLUGIN_COMMAND_PREFIX:add-service" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
+  local cmd="$PLUGIN_COMMAND_PREFIX:add-service" argv=("$@")
+  [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare SERVICE_TYPE="$1" SERVICE="$2" USER="$3"
 
   fn-acl-check-service "$SERVICE_TYPE" "$SERVICE"
@@ -26,8 +28,8 @@ cmd-acl-add-service() {
   [[ ! -d "$ACL_PATH" ]] && mkdir -p "$ACL_PATH"
 
   if [[ -f "$ACL_FILE" ]]; then
-     echo "User already has permissions to push to this repository" >&2
-     exit 2;
+    echo "User already has permissions to push to this repository" >&2
+    exit 2
   fi
 
   touch "$ACL_FILE"

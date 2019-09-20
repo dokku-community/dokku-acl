@@ -29,7 +29,7 @@ case "$1" in
     echo "svendowideit/ambassador              latest              0d2200edc53e        2 days ago          7.241 MB"
     ;;
   inspect)
-    if [[ $@ = *"IPAddress"* ]]; then
+    if [[ $@ == *"IPAddress"* ]]; then
       echo "172.17.0.34"
       exit 0
     fi
@@ -58,7 +58,7 @@ case "$1" in
     echo "$PLUGIN_SERVICE $PLUGIN_IMAGE_VERSION"
     ;;
   ps)
-    if [[ $@ = *"no-trunc"* ]]; then
+    if [[ $@ == *"no-trunc"* ]]; then
       echo "1479bbd60ade8a92617d2aeb4935bd3ff3179bd0fd71c22c3102c421f4bc221f"
       exit 0
     else

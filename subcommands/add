@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
-set -eo pipefail; [[ $DOKKU_TRACE ]] && set -x
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
 source "$PLUGIN_BASE_PATH/common/functions"
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
 
@@ -10,7 +11,8 @@ cmd-acl-add() {
   #A app, app to run command against
   #A user, a user to allow access
   declare desc="allow <user> to push to <app>'s repository"
-  local cmd="$PLUGIN_COMMAND_PREFIX:add" argv=("$@"); [[ ${argv[0]} == "$cmd" ]] && shift 1
+  local cmd="$PLUGIN_COMMAND_PREFIX:add" argv=("$@")
+  [[ ${argv[0]} == "$cmd" ]] && shift 1
   declare APP="$1" USER="$2"
   local ACL_PATH="$DOKKU_ROOT/$APP/acl"
   local ACL_FILE="$ACL_PATH/$USER"
@@ -24,8 +26,8 @@ cmd-acl-add() {
   [[ ! -d "$ACL_PATH" ]] && mkdir -p "$ACL_PATH"
 
   if [[ -f "$ACL_FILE" ]]; then
-     echo "User already has permissions to push to this repository" >&2
-     exit 2;
+    echo "User already has permissions to push to this repository" >&2
+    exit 2
   fi
   touch "$ACL_FILE"
 }
