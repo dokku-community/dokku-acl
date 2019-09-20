@@ -3,7 +3,6 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/config"
 set -eo pipefail
 [[ $DOKKU_TRACE ]] && set -x
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common-functions"
-# shellcheck disable=SC2155
 export SUBCOMMAND_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/subcommands"
 
 fn-help() {
@@ -34,18 +33,18 @@ fn-help-all() {
   FULL_OUTPUT=true
 
   if [[ "$CMD" == "$PLUGIN_COMMAND_PREFIX:help" ]] || [[ "$CMD" == "$PLUGIN_COMMAND_PREFIX" ]] || [[ "$CMD" == "$PLUGIN_COMMAND_PREFIX:default" ]]; then
-    BOLD="$(tput bold)"
-    NORMAL="\\033[m"
-    BLUE="\\033[0;34m"
-    CYAN="\\033[1;36m"
+    BOLD="$(fn-help-fancy-tput bold)"
+    NORMAL="$(fn-help-fancy-color "\033[m")"
+    BLUE="$(fn-help-fancy-color "\033[0;34m")"
+    CYAN="$(fn-help-fancy-color "\033[1;36m")"
     if [[ -n "$SUBCOMMAND" ]] && [[ "$SUBCOMMAND" != "--all" ]]; then
       fn-help-contents-subcommand "$SUBCOMMAND" "$FULL_OUTPUT"
       return "$?"
     fi
 
-    echo -e "${BOLD}usage${NORMAL}: dokku $PLUGIN_COMMAND_PREFIX[:COMMAND]"
+    echo -e "${BOLD}usage${NORMAL}: dokku ${PLUGIN_COMMAND_PREFIX}[:COMMAND]"
     echo ''
-    echo -e "${BOLD}List your $PLUGIN_COMMAND_PREFIX services.${NORMAL}"
+    echo -e "${BOLD}List your acls for an app.${NORMAL}"
     echo ''
     echo -e "${BLUE}Example:${NORMAL}"
     echo ''
@@ -61,7 +60,7 @@ fn-help-all() {
     fn-help-contents
   else
     cat <<help_desc
-    $PLUGIN_COMMAND_PREFIX, Plugin for managing $PLUGIN_SERVICE services
+    $PLUGIN_COMMAND_PREFIX, Plugin for managing $PLUGIN_SERVICE 
 help_desc
   fi
 
@@ -77,10 +76,9 @@ fn-help-contents() {
 
 fn-help-contents-subcommand() {
   declare SUBCOMMAND="$1" FULL_OUTPUT="$2"
-  local BOLD CLEAN_FILE CMD_OUTPUT CYAN EXAMPLE LIGHT_GRAY NORMAL TMPDIR UNCLEAN_FILE
-  TMPDIR=$(mktemp -d)
-  UNCLEAN_FILE="${TMPDIR}cmd-unclean"
-  CLEAN_FILE="${TMPDIR}cmd-clean"
+  local TMPDIR=$(mktemp -d)
+  local UNCLEAN_FILE="${TMPDIR}/cmd-unclean" CLEAN_FILE="${TMPDIR}/cmd-clean"
+  local BOLD CMD_OUTPUT CYAN EXAMPLE LIGHT_GRAY NORMAL
   trap 'rm -rf "$TMPDIR" > /dev/null' RETURN INT TERM EXIT
 
   rm -rf "$UNCLEAN_FILE" "$CLEAN_FILE"
@@ -98,12 +96,12 @@ fn-help-contents-subcommand() {
   desc="$(grep desc "$CLEAN_FILE" | head -1)"
   eval "$desc"
 
-  BLUE="\\033[0;34m"
-  BOLD="$(tput bold)"
-  CYAN="\\033[1;36m"
-  NORMAL="\\033[m"
-  LIGHT_GRAY="\\033[2;37m"
-  LIGHT_RED="\\033[1;31m"
+  BLUE="$(fn-help-fancy-color "\033[0;34m")"
+  BOLD="$(fn-help-fancy-tput bold)"
+  CYAN="$(fn-help-fancy-color "\033[1;36m")"
+  NORMAL="$(fn-help-fancy-color "\033[m")"
+  LIGHT_GRAY="$(fn-help-fancy-color "\033[2;37m")"
+  LIGHT_RED="$(fn-help-fancy-color "\033[1;31m")"
   CMD_OUTPUT="$(echo -e "    ${PLUGIN_COMMAND_PREFIX}${cmd_line}, ${LIGHT_GRAY}${desc}${NORMAL}")"
   if [[ "$FULL_OUTPUT" != "true" ]]; then
     echo "$CMD_OUTPUT"
@@ -142,6 +140,26 @@ fn-help-contents-subcommand() {
   return 0
 }
 
+fn-help-fancy-tput() {
+  declare desc="A wrapper around tput"
+
+  if [[ -n "$DOKKU_NO_COLOR" ]] || [[ "$TERM" == "unknown" ]] || [[ "$TERM" == "dumb" ]]; then
+    return
+  fi
+
+  tput "$@"
+}
+
+fn-help-fancy-color() {
+  declare desc="A wrapper around colors"
+
+  if [[ -n "$DOKKU_NO_COLOR" ]] || [[ "$TERM" == "unknown" ]] || [[ "$TERM" == "dumb" ]]; then
+    return
+  fi
+
+  echo "$@"
+}
+
 fn-help-list-example() {
   # shellcheck disable=SC2034
   declare desc="return $PLUGIN_COMMAND_PREFIX plugin help content"
@@ -155,12 +173,11 @@ fn-help-subcommand-args() {
   local argline arglist args argpos BLUE NORMAL
 
   if [[ "$FULL_OUTPUT" == "true" ]]; then
-    BLUE="\\033[0;34m"
-    NORMAL="\\033[m"
+    BLUE="$(fn-help-fancy-color "\033[0;34m")"
+    NORMAL="$(fn-help-fancy-color "\033[m")"
   fi
   argline=$(grep declare "$FUNC_FILE" | grep -v "declare desc" | head -1 || true)
-  # shellcheck disable=SC2207
-  arglist=($(echo -e "${argline// /"\\n"}" | awk -F= '/=/{print ""$1""}'))
+  arglist=($(echo -e "${argline// /"\n"}" | awk -F= '/=/{print ""$1""}'))
   args=""
   argpos=0
   for arg in "${arglist[@]}"; do
@@ -188,7 +205,7 @@ fn-help-subcommand-args() {
       args+=" <${arg//_/-}>"
     fi
   done
-  args=$(echo "$args" | tr "\\n" " ")
+  args=$(echo "$args" | tr "\n" " ")
   # shellcheck disable=SC2001
   echo "${args,,}" | sed -e 's/^[[:space:]]*//'
 }
@@ -202,28 +219,28 @@ fn-help-subcommand-example() {
     return 0
   fi
 
-  BOLD="$(tput bold)"
+  BOLD="$(fn-help-fancy-tput bold)"
   LAST_LINE=""
-  LIGHT_GRAY="\\033[2;37m"
-  OTHER_GRAY="\\033[7;37m"
+  LIGHT_GRAY="$(fn-help-fancy-color "\033[2;37m")"
+  OTHER_GRAY="$(fn-help-fancy-color "\033[7;37m")"
   NEWLINE=""
-  NORMAL="\\033[m"
+  NORMAL="$(fn-help-fancy-color "\033[m")"
   _fn-help-apply-shell-expansion "$EXAMPLE" | while read -r line; do
     line="$(echo "$line" | cut -c 4-)"
     if [[ "$line" == export* ]] || [[ "$line" == dokku* ]]; then
       [[ "$LAST_LINE" == "command" ]] && NEWLINE=""
-      [[ "$LAST_LINE" == "sentence" ]] && NEWLINE="\\n"
+      [[ "$LAST_LINE" == "sentence" ]] && NEWLINE="\n"
       echo -e "${NEWLINE}    ${LIGHT_GRAY}${line}${NORMAL}"
       LAST_LINE="command"
     else
-      [[ "$LAST_LINE" == "command" ]] && NEWLINE="\\n"
+      [[ "$LAST_LINE" == "command" ]] && NEWLINE="\n"
       [[ "$LAST_LINE" == "sentence" ]] && NEWLINE=""
-      [[ "$line" == \>* ]] && line="\\n    ${BOLD}${line}${NORMAL}"
+      [[ "$line" == \>* ]] && line="\n    ${BOLD}${line}${NORMAL}"
       # shellcheck disable=SC2001
       [[ "$line" == "    "* ]] && line="    ${OTHER_GRAY}$(echo "$line" | sed -e 's/^[[:space:]]*//')${NORMAL}"
       echo -e "${NEWLINE}${line}"
       LAST_LINE="sentence"
-      NEWLINE="\\n"
+      NEWLINE="\n"
     fi
   done
 }
@@ -237,8 +254,8 @@ fn-help-subcommand-list-args() {
     return 0
   fi
 
-  NORMAL="\\033[m"
-  LIGHT_GRAY="\\033[2;37m"
+  NORMAL="$(fn-help-fancy-color "\033[m")"
+  LIGHT_GRAY="$(fn-help-fancy-color "\033[2;37m")"
 
   _fn-help-apply-shell-expansion "$FLAGS" | while read -r line; do
     echo -e "$(echo "$line" | cut -d',' -f1),${LIGHT_GRAY}$(echo "$line" | cut -d',' -f2-)${NORMAL}"
@@ -254,8 +271,8 @@ fn-help-subcommand-list-flags() {
     return 0
   fi
 
-  NORMAL="\\033[m"
-  LIGHT_GRAY="\\033[2;37m"
+  NORMAL="$(fn-help-fancy-color "\033[m")"
+  LIGHT_GRAY="$(fn-help-fancy-color "\033[2;37m")"
 
   _fn-help-apply-shell-expansion "$FLAGS" | while read -r line; do
     echo -e "$(echo "$line" | cut -d',' -f1),${LIGHT_GRAY}$(echo "$line" | cut -d',' -f2-)${NORMAL}"
