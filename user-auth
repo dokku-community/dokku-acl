@@ -33,6 +33,7 @@ for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
     if [[ -z "$2" ]]; then
       dokku_log_fail "An app name is required"
     fi
+    # shellcheck disable=SC1003
     APP_NAME="$(echo "$2" | perl -pe 's/(?<!\\)'\''//g' | sed 's/\\'\''/'\''/g' | sed 's/^\///g')"
     fn-check-app-acl "$APP_NAME" "$SSH_NAME" && exit 0
   fi
