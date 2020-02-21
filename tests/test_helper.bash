@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 export DOKKU_QUIET_OUTPUT=1
+
+if [[ -z "$DOKKU_ROOT" ]]; then
+  export BUILD_DOKKU=1
+fi
 export DOKKU_ROOT="${DOKKU_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dokku}"
 export DOKKU_VERSION=${DOKKU_VERSION:-"master"}
 export PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin:$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dokku:$PATH"

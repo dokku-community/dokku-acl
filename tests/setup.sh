@@ -14,7 +14,7 @@ echo "Dokku version $DOKKU_VERSION"
 git checkout $DOKKU_VERSION > /dev/null
 rm -rf $DOKKU_ROOT/plugins/acl
 
-if grep go-build Makefile > /dev/null; then
+if [[ "$BUILD_DOKKU" == "1" ]]; then
   mv "$BIN_STUBS/docker" "$BIN_STUBS/docker-stub" || true
   make go-build
   mv "$BIN_STUBS/docker-stub" "$BIN_STUBS/docker"
