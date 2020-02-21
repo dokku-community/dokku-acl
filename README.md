@@ -20,6 +20,19 @@ hosting. (See below for notes and limitations.)
 dokku plugin:install https://github.com/dokku-community/dokku-acl.git acl
 ```
 
+## running tests locally
+
+clone and build `dokku`:
+```shell
+git clone https://github.com/dokku/dokku.git
+cd dokku; make go-build
+```
+
+Run tests:
+```shell
+DOKKU_ROOT="../path-to-dokku-dir" DOKKU_SYSTEM_USER=$USER make test
+```
+
 ## commands
 
 ```shell
