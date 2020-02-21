@@ -11,9 +11,11 @@ fi
 
 cd $DOKKU_ROOT
 echo "Dokku version $DOKKU_VERSION"
-git checkout $DOKKU_VERSION >/dev/null
-if grep go-build Makefile >/dev/null; then
-  mv "$BIN_STUBS/docker" "$BIN_STUBS/docker-stub"
+git checkout $DOKKU_VERSION > /dev/null
+rm -rf $DOKKU_ROOT/plugins/acl
+
+if grep go-build Makefile > /dev/null; then
+  mv "$BIN_STUBS/docker" "$BIN_STUBS/docker-stub" || true
   make go-build
   mv "$BIN_STUBS/docker-stub" "$BIN_STUBS/docker"
 fi
@@ -25,7 +27,6 @@ test -f /etc/init.d/nginx || {
 }
 
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
-rm -rf $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX
 mkdir -p $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands
 find ./ -maxdepth 1 -type f -exec cp '{}' $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX \;
 find ./subcommands -maxdepth 1 -type f -exec cp '{}' $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands \;
