@@ -7,7 +7,7 @@ source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-func
 
 cmd-acl-remove() {
   #E remove access to the lolipop app from admin user access
-  #E dokku $PLUGIN_COMMAND_PREFIX:add lolipop admin
+  #E dokku $PLUGIN_COMMAND_PREFIX:remove lolipop admin
   #A app, app to run command against
   #A user, a user to allow access
   declare desc="revoke <user>'s access to <app>"

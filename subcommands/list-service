@@ -7,7 +7,7 @@ source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-func
 
 cmd-acl-list-service() {
   #E show users that have access to the birds redis service
-  #E dokku $PLUGIN_COMMAND_PREFIX:list redis birds
+  #E dokku $PLUGIN_COMMAND_PREFIX:list-service redis birds
   #A type, type of service
   #A service, service to run command against
   declare desc="show list of users with access to <service> of type <type>"
