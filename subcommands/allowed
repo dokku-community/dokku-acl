@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
+
+cmd-acl-allowed() {
+  #E show apps of a given type that the user has access to
+  #E dokku $PLUGIN_COMMAND_PREFIX:list redis birds
+  #A username, user to check for access
+  declare desc="list apps the user has access to"
+  local cmd="$PLUGIN_COMMAND_PREFIX:allowed" argv=("$@")
+  [[ ${argv[0]} == "$cmd" ]] && shift 1
+  declare USERNAME="$1"
+
+  if [[ -n "${NAME:-}" ]]; then
+    dokku_log_fail "This command can only be run using the local dokku command on the target host"
+  fi
+
+  if [[ -z "$USERNAME" ]]; then
+    dokku_log_fail "No username specified"
+  fi
+
+  if fn-acl-is-super-user "$USERNAME"; then
+    dokku_apps
+    return
+  fi
+
+  pushd "$DOKKU_ROOT" >/dev/null
+  ls -d */acl/$USERNAME 2>/dev/null | cut -d '/' -f1 || true
+  popd >/dev/null
+}
+
+cmd-acl-allowed "$@"

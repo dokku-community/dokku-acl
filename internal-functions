@@ -121,3 +121,14 @@ fn-check-service-acl() {
 
   dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $SERVICE, or $SERVICE does not exist"
 }
+
+fn-acl-is-super-user() {
+  declare desc="check if the specified user is a super user"
+  declare USERNAME="$1"
+
+  if [[ "$USERNAME" == "$DOKKU_SUPER_USER" ]]; then
+    return
+  fi
+
+  return 1
+}
