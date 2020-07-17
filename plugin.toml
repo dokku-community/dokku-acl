@@ -1,4 +1,4 @@
 [plugin]
 description = "dokku plugin that can be used to restrict push privileges for app to certain users"
-version = "1.5.0"
+version = "1.5.1"
 [plugin.config]
