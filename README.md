@@ -149,7 +149,7 @@ currently recommend allowing `logs`, `urls`, `ps:rebuild`,
 To do this, add the following line to `~dokku/.dokkurc/acl`:
 
 ```shell
-export DOKKU_ACL_PER_APP_COMMANDS="logs urls ps:rebuild ps:restart ps:stop ps:start git-upload-pack git-upload-archive"
+export DOKKU_ACL_PER_APP_COMMANDS="logs urls ps:rebuild ps:restart ps:stop ps:start git-upload-pack git-upload-archive git-receive-pack git-hook"
 ```
 
 This will also prevent users from reading from app repos when they aren't in
