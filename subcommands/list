@@ -19,11 +19,11 @@ cmd-acl-list() {
     for APP in $INSTALLED_APPS; do
       fn-acl-check-app "$APP"
       dokku_log_info2_quiet "${APP} acl list"
-      ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null || true
+      ls -1 "$DOKKU_ROOT/$APP/acl" 2>/dev/null || true
     done
   else
     fn-acl-check-app "$APP"
-    ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null || true
+    ls -1 "$DOKKU_ROOT/$APP/acl" 2>/dev/null || true
   fi
 }
 
