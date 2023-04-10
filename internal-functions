@@ -126,9 +126,11 @@ fn-acl-is-super-user() {
   declare desc="check if the specified user is a super user"
   declare USERNAME="$1"
 
-  if [[ "$USERNAME" == "$DOKKU_SUPER_USER" ]]; then
-    return
-  fi
+  for super_user in $DOKKU_SUPER_USER; do
+    if [[ "$USERNAME" == "$super_user" ]]; then
+      return
+    fi
+  done
 
   return 1
 }

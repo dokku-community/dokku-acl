@@ -20,7 +20,7 @@ shift 2
 
 [[ -z "$DOKKU_ACL_USER_COMMANDS" && -z "$DOKKU_ACL_PER_APP_COMMANDS" && -z "$DOKKU_ACL_PER_SERVICE_COMMANDS" && -z "$DOKKU_ACL_LINK_COMMANDS" ]] && exit 0
 [[ "$SSH_USER" == "root" ]] && exit 0
-[[ -n "$DOKKU_SUPER_USER" ]] && [[ "$SSH_NAME" == "$DOKKU_SUPER_USER" ]] && exit 0
+[[ -n "$DOKKU_SUPER_USER" ]] && fn-acl-is-super-user "$SSH_NAME" && exit 0
 
 CMD=$1
 
