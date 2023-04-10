@@ -2,6 +2,7 @@
 set -eo pipefail
 [[ $DOKKU_TRACE ]] && set -x
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"
 
 APP="$1"
 ACL="$DOKKU_ROOT/$APP/acl"
@@ -26,7 +27,7 @@ if [[ -z "$NAME" ]]; then
 fi
 
 if [[ ! -d "$ACL" ]]; then
-  if [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
+  if [[ -n "$DOKKU_SUPER_USER" ]] && ! fn-acl-is-super-user "$NAME"; then
     dokku_log_fail "Only $DOKKU_SUPER_USER can modify a repository if the ACL is empty"
   fi
 
@@ -35,7 +36,7 @@ fi
 
 ACL_FILE="$ACL/$NAME"
 
-if [[ ! -f "$ACL_FILE" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
+if [[ ! -f "$ACL_FILE" ]] && ! fn-acl-is-super-user "$NAME"; then
   echo "User $NAME does not have permissions to modify this repository" >&2
   exit 2
 fi

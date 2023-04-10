@@ -76,7 +76,13 @@ user by defining `$DOKKU_SUPER_USER` env in `~dokku/.dokkurc/acl`:
 export DOKKU_SUPER_USER=puck
 ```
 
-If defined, this user is always allowed to push, and no other users are allowed to push to apps with empty ACLs.
+If defined, this user (or users) is always allowed to push, and no other users are allowed to push to apps with empty ACLs.
+
+You can also specify multiple users:
+
+```shell
+export DOKKU_SUPER_USER="dokku puck"
+```
 
 ### command restrictions
 
