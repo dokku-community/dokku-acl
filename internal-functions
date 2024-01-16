@@ -122,6 +122,47 @@ fn-check-service-acl() {
   dokku_log_fail "User $SSH_NAME does not have permissions to run $CMD on $SERVICE, or $SERVICE does not exist"
 }
 
+fn-check-modify-app-acl() {
+  declare desc="Checks if the current dokku user is allowed to modify the given app"
+  declare APP="$1"
+
+  local ACL="$DOKKU_ROOT/$APP/acl"
+  local DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
+  local DOKKU_ACL_ALLOW_COMMAND_LINE="${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
+
+  if [[ -z "$NAME" ]]; then
+    # Command line usage doesn't set $NAME.
+
+    if [[ -z "$DOKKU_ACL_ALLOW_COMMAND_LINE" ]]; then
+      # Preserve legacy behaviour by default for safety, even though it's weird.
+
+      [[ -z "$DOKKU_SUPER_USER" ]] && exit 0
+
+      dokku_log_fail "It appears that you're running this command from the command" \
+        "line.  The \"dokku-acl\" plugin disables this by default for" \
+        "safety.  Please check the \"dokku-acl\" documentation for how" \
+        "to enable command line usage."
+    fi
+
+    exit 0
+  fi
+
+  if [[ ! -d "$ACL" ]]; then
+    if [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
+      dokku_log_fail "Only $DOKKU_SUPER_USER can modify a repository if the ACL is empty"
+    fi
+
+    exit 0 # all good, there are no restrictions
+  fi
+
+  local ACL_FILE="$ACL/$NAME"
+
+  if [[ ! -f "$ACL_FILE" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
+    echo "User $NAME does not have permissions to modify this repository" >&2
+    exit 2
+  fi
+}
+
 fn-acl-is-super-user() {
   declare desc="check if the specified user is a super user"
   declare USERNAME="$1"

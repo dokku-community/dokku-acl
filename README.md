@@ -8,7 +8,7 @@ hosting. (See below for notes and limitations.)
 
 ## requirements
 
-- dokku 0.4.0+
+- dokku 0.32.0+
 - docker 1.8.x
 
 - An older version of this plugin works with dokku 0.3.x; the last version

@@ -1,1 +1,8 @@
-pre-build
+#!/usr/bin/env bash
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"
+
+APP="$1"
+fn-check-modify-app-acl "$APP"

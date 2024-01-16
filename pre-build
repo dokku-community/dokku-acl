@@ -2,40 +2,7 @@
 set -eo pipefail
 [[ $DOKKU_TRACE ]] && set -x
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"
 
-APP="$1"
-ACL="$DOKKU_ROOT/$APP/acl"
-DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
-DOKKU_ACL_ALLOW_COMMAND_LINE="${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
-
-if [[ -z "$NAME" ]]; then
-  # Command line usage doesn't set $NAME.
-
-  if [[ -z "$DOKKU_ACL_ALLOW_COMMAND_LINE" ]]; then
-    # Preserve legacy behaviour by default for safety, even though it's weird.
-
-    [[ -z "$DOKKU_SUPER_USER" ]] && exit 0
-
-    dokku_log_fail "It appears that you're running this command from the command" \
-      "line.  The \"dokku-acl\" plugin disables this by default for" \
-      "safety.  Please check the \"dokku-acl\" documentation for how" \
-      "to enable command line usage."
-  fi
-
-  exit 0
-fi
-
-if [[ ! -d "$ACL" ]]; then
-  if [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
-    dokku_log_fail "Only $DOKKU_SUPER_USER can modify a repository if the ACL is empty"
-  fi
-
-  exit 0 # all good, there are no restrictions
-fi
-
-ACL_FILE="$ACL/$NAME"
-
-if [[ ! -f "$ACL_FILE" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
-  echo "User $NAME does not have permissions to modify this repository" >&2
-  exit 2
-fi
+APP="$2"
+fn-check-modify-app-acl "$APP"
