@@ -61,7 +61,7 @@ fn-help-all() {
     fn-help-contents
   else
     cat <<help_desc
-    $PLUGIN_COMMAND_PREFIX, Plugin for managing $PLUGIN_SERVICE 
+    $PLUGIN_COMMAND_PREFIX, Manage access control lists for apps and services
 help_desc
   fi
 

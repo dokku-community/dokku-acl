@@ -6,8 +6,8 @@ source "$PLUGIN_BASE_PATH/common/functions"
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
 
 cmd-acl-allowed-services() {
-  #E show services of a given type that the user has access to
-  #E dokku $PLUGIN_COMMAND_PREFIX:list redis birds
+  #E show redis services that the admin user has access to
+  #E dokku $PLUGIN_COMMAND_PREFIX:allowed-services redis admin
   #A type, type of service
   #A username, user to check for access
   declare desc="list services of type <type> that the user has access to"
@@ -37,9 +37,14 @@ cmd-acl-allowed-services() {
     return
   fi
 
-  pushd "$PLUGIN_DATA_ROOT" >/dev/null
-  ls -d */acl/$USERNAME 2>/dev/null | cut -d '/' -f1 || true
-  popd >/dev/null
+  # glob on absolute paths rather than changing directory: returning to the
+  # caller's working directory fails when the dokku user cannot access it
+  local acl_file entry
+  for acl_file in "$PLUGIN_DATA_ROOT"/*/acl/"$USERNAME"; do
+    [[ -f "$acl_file" ]] || continue
+    entry="${acl_file#"$PLUGIN_DATA_ROOT/"}"
+    echo "${entry%%/*}"
+  done
 }
 
 cmd-acl-allowed-services "$@"

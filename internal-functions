@@ -35,11 +35,13 @@ cmd-acl-report-single() {
   fi
   verify_app_name "$APP"
   local flag_map=(
-    "--acl-allowed-users: $(ls -1 "$DOKKU_ROOT/$APP/acl" >&2 2>/dev/null || true)"
-    "--acl-global-allow-command-line: $DOKKU_ACL_ALLOW_COMMAND_LINE"
-    "--acl-global-super-user: $DOKKU_SUPER_USER"
-    "--acl-global-user-commands: $DOKKU_ACL_USER_COMMANDS"
-    "--acl-global-per-app-commands: $DOKKU_ACL_PER_APP_COMMANDS"
+    "--acl-allowed-users: $(fn-acl-allowed-users "$APP")"
+    "--acl-global-allow-command-line: ${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
+    "--acl-global-super-user: ${DOKKU_SUPER_USER:-}"
+    "--acl-global-user-commands: ${DOKKU_ACL_USER_COMMANDS:-}"
+    "--acl-global-per-app-commands: ${DOKKU_ACL_PER_APP_COMMANDS:-}"
+    "--acl-global-per-service-commands: ${DOKKU_ACL_PER_SERVICE_COMMANDS:-}"
+    "--acl-global-link-commands: ${DOKKU_ACL_LINK_COMMANDS:-}"
   )
 
   if [[ -z "$INFO_FLAG" ]]; then
@@ -50,22 +52,27 @@ cmd-acl-report-single() {
     done
   else
     local match=false
-    local value_exists=false
+    local valid_flags=""
     for flag in "${flag_map[@]}"; do
       valid_flags="${valid_flags} $(echo "$flag" | cut -d':' -f1)"
       if [[ "$flag" == "${INFO_FLAG}:"* ]]; then
         value=${flag#*: }
-        size="${#value}"
-        if [[ "$size" -ne 0 ]]; then
-          echo "$value" && match=true && value_exists=true
-        else
-          match=true
-        fi
+        # an unset value is a valid answer, so print it (possibly empty) and succeed
+        [[ -n "$value" ]] && echo "$value"
+        match=true
       fi
     done
     [[ "$match" == "true" ]] || dokku_log_fail "Invalid flag passed, valid flags:${valid_flags}"
-    [[ "$value_exists" == "true" ]] || dokku_log_fail "not deployed"
   fi
+}
+
+fn-acl-allowed-users() {
+  declare desc="print the space-separated users in the acl for an app"
+  declare APP="$1"
+  local ACL_PATH="$DOKKU_ROOT/$APP/acl"
+
+  [[ -d "$ACL_PATH" ]] || return 0
+  find "$ACL_PATH" -mindepth 1 -maxdepth 1 -type f -printf "%f\n" | sort | xargs
 }
 
 fn-acl-check-app() {

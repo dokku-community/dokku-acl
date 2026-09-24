@@ -1,0 +1,9 @@
+# SC1090/SC1091: source paths (config, dokku core functions) are resolved at
+# runtime and cannot be followed statically
+disable=SC1090
+disable=SC1091
+# SC2034: `declare desc=...` / `declare cmd=...` are introspected by dokku for
+# help output
+disable=SC2034
+# SC2155: declare-and-assign is the established style throughout the plugin
+disable=SC2155
