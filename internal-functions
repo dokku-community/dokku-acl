@@ -107,6 +107,39 @@ fn-acl-validate-user() {
   fi
 }
 
+fn-acl-set-users() {
+  declare desc="replace the users in an acl directory with the given users"
+  declare ACL_PATH="$1"
+  shift 1
+  local user acl_file
+  local -A users=()
+
+  # validate every user before touching the acl so a bad name never leaves a
+  # half-written list behind
+  for user in "$@"; do
+    fn-acl-validate-user "$user"
+    users["u:$user"]=1
+  done
+
+  if [[ ${#users[@]} -eq 0 ]]; then
+    rm -rf "$ACL_PATH"
+    return
+  fi
+
+  # an absent acl directory means the app or service is unrestricted, so
+  # create it before anything else, and revoke before granting so an
+  # interrupted run never keeps a user that was meant to be removed
+  mkdir -p "$ACL_PATH"
+  for acl_file in "$ACL_PATH"/* "$ACL_PATH"/.[!.]* "$ACL_PATH"/..?*; do
+    [[ -e "$acl_file" ]] || continue
+    [[ -n "${users["u:${acl_file##*/}"]:-}" ]] || rm -rf "$acl_file"
+  done
+
+  for user in "${!users[@]}"; do
+    touch "$ACL_PATH/${user#u:}"
+  done
+}
+
 fn-check-app-acl() {
   declare desc="Checks if the current user has an ACL entry for the app"
   declare APP="$1" SSH_NAME="$2"
