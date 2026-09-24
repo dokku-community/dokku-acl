@@ -19,14 +19,33 @@ setup() {
 }
 
 teardown() {
+  clear_acl_config
   cleanup_app "$APP"
   cleanup_service_type "$TYPE"
 }
 
 # user-auth receives the ssh user, the ssh key name and the dokku command line.
-# Leading VAR=VALUE arguments are forwarded to the hook's environment.
+# Leading VAR=VALUE arguments are forwarded to the hook's environment. Over ssh,
+# dokku exports the key name as NAME, so it is set here to simulate an ssh user.
 user_auth() {
+  local env_overrides=()
+  while [[ "${1:-}" == [A-Z_]*=* ]]; do
+    env_overrides+=("$1")
+    shift
+  done
+  fire_trigger "${env_overrides[@]}" NAME="$3" "$@"
+}
+
+# Command line usage (cron jobs, systemd services, a shell on the server) does
+# not set NAME, and dokku core authenticates it as the "default" user.
+command_line_user_auth() {
   fire_trigger "$@"
+}
+
+# Run the dokku CLI as the dokku user, the way cron jobs and systemd services
+# do. Leading VAR=VALUE arguments are set in the CLI's environment.
+dokku_as_dokku_user() {
+  sudo -u dokku "$@"
 }
 
 # The per-service and link commands derive the service type from the command
@@ -200,4 +219,66 @@ create_redis_service() {
     run user_auth "${restrictions[@]}" user-auth root root "$cmd" acltest-service "$APP"
     [ "$status" -eq 0 ]
   done
+}
+
+@test "(user-auth) command line usage can run any command by default" {
+  local restrictions=(
+    DOKKU_ACL_USER_COMMANDS="$ALLOWED_CMDS"
+    DOKKU_ACL_PER_APP_COMMANDS="$PER_APP_CMDS"
+    DOKKU_ACL_PER_SERVICE_COMMANDS="$PER_SERVICE_CMDS"
+    DOKKU_ACL_LINK_COMMANDS="$LINK_CMDS"
+    DOKKU_SUPER_USER=admin
+  )
+
+  for value in "" 1 true yes; do
+    for cmd in $ALL_CMDS; do
+      run command_line_user_auth "${restrictions[@]}" DOKKU_ACL_ALLOW_COMMAND_LINE="$value" user-auth dokku default "$cmd"
+      [ "$status" -eq 0 ]
+    done
+
+    for cmd in $PER_APP_CMDS $PER_SERVICE_CMDS; do
+      run command_line_user_auth "${restrictions[@]}" DOKKU_ACL_ALLOW_COMMAND_LINE="$value" user-auth dokku default "$cmd" acltest-thing
+      [ "$status" -eq 0 ]
+    done
+
+    for cmd in $LINK_CMDS; do
+      run command_line_user_auth "${restrictions[@]}" DOKKU_ACL_ALLOW_COMMAND_LINE="$value" user-auth dokku default "$cmd" acltest-service "$APP"
+      [ "$status" -eq 0 ]
+    done
+  done
+}
+
+@test "(user-auth) command line usage is checked as the default user when DOKKU_ACL_ALLOW_COMMAND_LINE is falsy" {
+  for value in 0 false FALSE no off; do
+    for cmd in $RESTRICTED_CMDS; do
+      run command_line_user_auth DOKKU_ACL_USER_COMMANDS="$ALLOWED_CMDS" DOKKU_ACL_ALLOW_COMMAND_LINE="$value" user-auth dokku default "$cmd"
+      [ "$status" -ne 0 ]
+      [[ "$output" == *"User default does not have permissions to run $cmd"* ]]
+    done
+
+    for cmd in $ALLOWED_CMDS; do
+      run command_line_user_auth DOKKU_ACL_USER_COMMANDS="$ALLOWED_CMDS" DOKKU_ACL_ALLOW_COMMAND_LINE="$value" user-auth dokku default "$cmd"
+      [ "$status" -eq 0 ]
+    done
+  done
+}
+
+@test "(user-auth) the dokku user can run restricted commands from the command line" {
+  set_acl_config "export DOKKU_SUPER_USER=admin" "export DOKKU_ACL_USER_COMMANDS=help"
+
+  run dokku_as_dokku_user dokku apps:list
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"$APP"* ]]
+
+  run dokku_as_dokku_user NAME=user1 dokku apps:list
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"User user1 does not have permissions to run apps:list"* ]]
+}
+
+@test "(user-auth) the dokku user cannot run restricted commands from the command line when DOKKU_ACL_ALLOW_COMMAND_LINE is disabled" {
+  set_acl_config "export DOKKU_SUPER_USER=admin" "export DOKKU_ACL_USER_COMMANDS=help" "export DOKKU_ACL_ALLOW_COMMAND_LINE=0"
+
+  run dokku_as_dokku_user dokku apps:list
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"User default does not have permissions to run apps:list"* ]]
 }

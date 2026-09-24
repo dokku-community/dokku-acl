@@ -136,9 +136,7 @@ fn-check-modify-app-acl() {
   local ACL="$DOKKU_ROOT/$APP/acl"
   local DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 
-  if [[ -z "${NAME:-}" ]]; then
-    # Command line usage doesn't set $NAME.
-
+  if fn-acl-is-command-line; then
     if ! fn-acl-allow-command-line; then
       # Command line usage was explicitly disabled, so only allow it when
       # there is no super user.
@@ -168,6 +166,15 @@ fn-check-modify-app-acl() {
     echo "User $NAME does not have permissions to modify this repository" >&2
     exit 2
   fi
+}
+
+fn-acl-is-command-line() {
+  declare desc="check if the current dokku command was run from the command line"
+
+  # Only ssh connections set $NAME. dokku core authenticates everything else,
+  # such as cron jobs and systemd services, as the "default" SSH_NAME, but it
+  # does not export NAME, so hooks and nested dokku calls still see it empty.
+  [[ -z "${NAME:-}" ]]
 }
 
 fn-acl-allow-command-line() {
