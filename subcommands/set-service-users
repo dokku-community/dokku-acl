@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
+
+cmd-acl-set-service-users() {
+  #E allow only the servuser and admin users access to the birds Redis service
+  #E dokku $PLUGIN_COMMAND_PREFIX:set-service-users redis birds servuser admin
+  #E clear the acl for the birds Redis service
+  #E dokku $PLUGIN_COMMAND_PREFIX:set-service-users redis birds
+  #A type, type of service
+  #A service, service to run command against
+  #A user, zero or more users to allow access
+  declare desc="replace the list of users with access to <service> of type <type>"
+  local cmd="$PLUGIN_COMMAND_PREFIX:set-service-users" argv=("$@")
+  [[ ${argv[0]} == "$cmd" ]] && shift 1
+  declare SERVICE_TYPE="$1" SERVICE="$2" USER_LIST=("${@:3}")
+
+  fn-acl-check-service "$SERVICE_TYPE" "$SERVICE"
+  fn-acl-set-users "$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE/acl" "${USER_LIST[@]}"
+}
+
+cmd-acl-set-service-users "$@"

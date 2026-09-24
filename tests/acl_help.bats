@@ -16,7 +16,7 @@ load 'test_helper'
 @test "(acl:help) lists every subcommand" {
   run dokku acl:help
   [ "$status" -eq 0 ]
-  for subcommand in add add-service allowed allowed-services list list-service remove remove-service report; do
+  for subcommand in add add-service allowed allowed-services list list-service remove remove-service report set-service-users set-users; do
     [[ "$output" == *"acl:${subcommand} "* ]]
   done
 }
@@ -44,4 +44,16 @@ load 'test_helper'
   run dokku help
   [ "$status" -eq 0 ]
   [[ "$output" == *"acl"*"Manage access control lists for apps and services"* ]]
+}
+
+@test "(acl:help) shows the usage for the set-users subcommands" {
+  run dokku acl:help set-users
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"dokku acl:set-users <app> <user...>"* ]]
+  [[ "$output" == *"dokku acl:set-users lolipop admin deploy"* ]]
+
+  run dokku acl:help set-service-users
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"dokku acl:set-service-users <service-type> <service> <user...>"* ]]
+  [[ "$output" == *"dokku acl:set-service-users redis birds servuser admin"* ]]
 }

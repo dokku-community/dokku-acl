@@ -23,16 +23,18 @@ dokku plugin:install https://github.com/dokku-community/dokku-acl.git acl
 ## commands
 
 ```shell
-acl:add <app> <user>          Allow <user> to access <app>
-acl:allowed <user>            List apps the user has access to
-acl:list <app>                Show list of users with access to <app>
-acl:remove <app> <user>       Revoke <user>'s access to <app>
-acl:report [<app>] [<flag>]   Displays an acl report for one or more apps
+acl:add <app> <user>              Allow <user> to access <app>
+acl:allowed <user>                List apps the user has access to
+acl:list <app>                    Show list of users with access to <app>
+acl:remove <app> <user>           Revoke <user>'s access to <app>
+acl:report [<app>] [<flag>]       Displays an acl report for one or more apps
+acl:set-users <app> [<user>...]   Replace the list of users with access to <app>
 
-acl:add-service <type> <service> <user>      Allow <user> to access <service> of type <type>
-acl:allowed-services <type> <user>           List services of type <type> that the user has access to
-acl:list-service <type> <service>            Show list of users with access to <service> of type <type>
-acl:remove-service <type> <service> <user>   Revoke <user>'s access to <service> of type <type>
+acl:add-service <type> <service> <user>              Allow <user> to access <service> of type <type>
+acl:allowed-services <type> <user>                   List services of type <type> that the user has access to
+acl:list-service <type> <service>                    Show list of users with access to <service> of type <type>
+acl:remove-service <type> <service> <user>           Revoke <user>'s access to <service> of type <type>
+acl:set-service-users <type> <service> [<user>...]   Replace the list of users with access to <service> of type <type>
 ```
 
 ## usage
@@ -43,6 +45,13 @@ user. After an allowed user list is created for app, no other users
 will be able to push.
 
 To remove the restrictions, remove all users from the ACL.
+
+To declare the complete list of users in one call, use
+`dokku acl:set-users your-app user1 user2` (or
+`dokku acl:set-service-users <type> <service> user1 user2` for a
+service). Any users not in the list are removed, and calling it with no
+users clears the ACL. Every user name is validated before the ACL is
+changed, so an invalid name leaves the existing list untouched.
 
 You cannot modify the ACL list by ssh (`ssh target-host dokku acl:add …`); you have to do it using a local command.
 

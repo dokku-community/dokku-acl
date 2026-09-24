@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
+
+cmd-acl-set-users() {
+  #E allow only the admin and deploy users access to the lolipop app
+  #E dokku $PLUGIN_COMMAND_PREFIX:set-users lolipop admin deploy
+  #E clear the acl for the lolipop app
+  #E dokku $PLUGIN_COMMAND_PREFIX:set-users lolipop
+  #A app, app to run command against
+  #A user, zero or more users to allow access
+  declare desc="replace the list of users with access to <app>"
+  local cmd="$PLUGIN_COMMAND_PREFIX:set-users" argv=("$@")
+  [[ ${argv[0]} == "$cmd" ]] && shift 1
+  declare APP="$1" USER_LIST=("${@:2}")
+
+  fn-acl-check-app "$APP"
+  fn-acl-set-users "$DOKKU_ROOT/$APP/acl" "${USER_LIST[@]}"
+}
+
+cmd-acl-set-users "$@"
