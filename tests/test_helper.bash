@@ -1,79 +1,135 @@
 #!/usr/bin/env bash
-export DOKKU_QUIET_OUTPUT=1
-export DOKKU_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dokku"
-export DOKKU_VERSION=${DOKKU_VERSION:-"master"}
-export PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin:$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/dokku:$PATH"
-export PLUGIN_COMMAND_PREFIX="acl"
-export PLUGIN_PATH="$DOKKU_ROOT/plugins"
-export PLUGIN_ENABLED_PATH="$PLUGIN_PATH"
-export PLUGIN_AVAILABLE_PATH="$PLUGIN_PATH"
-export PLUGIN_CORE_AVAILABLE_PATH="$PLUGIN_PATH"
+# Helpers for the dokku-acl bats suite. Sourced by every *.bats file.
 
-export DOKKU_LIB_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib-root"
-if [[ "$(uname)" == "Darwin" ]]; then
-  export PLUGN_URL="https://github.com/dokku/plugn/releases/download/v0.3.0/plugn_0.3.0_darwin_x86_64.tgz"
-else
-  export PLUGN_URL="https://github.com/dokku/plugn/releases/download/v0.3.0/plugn_0.3.0_linux_x86_64.tgz"
-fi
+# `SUDO` is empty in compose mode (bats already runs as root in the dokku
+# container) and `sudo` in native mode (files under /home/dokku and
+# /var/lib/dokku need elevation to create or modify).
+SUDO="${SUDO:-}"
 
-flunk() {
-  {
-    if [ "$#" -eq 0 ]; then
-      cat -
-    else
-      echo "$*"
-    fi
-  }
-  return 1
+# Message the plugin prints when an ACL is modified over ssh.
+ACL_SSH_MODIFY_ERROR="You can only modify ACL using local dokku command on target host"
+
+new_app_name() {
+  echo "acltest-${BATS_TEST_NUMBER:-0}-$(date +%s)-${RANDOM}"
 }
 
-assert_equal() {
-  if [ "$1" != "$2" ]; then
-    {
-      echo "expected: $1"
-      echo "actual:   $2"
-    } | flunk
+create_app() {
+  local app="$1"
+  dokku apps:create "$app"
+}
+
+cleanup_app() {
+  local app="$1"
+  if dokku apps:exists "$app" >/dev/null 2>&1; then
+    dokku --force apps:destroy "$app" >/dev/null 2>&1 || true
   fi
 }
 
-assert_exit_status() {
-  assert_equal "$status" "$1"
+# Run the dokku CLI as root. The CLI records the invoking user as SSH_USER
+# before re-executing itself as the dokku user, and the plugin's user-auth hook
+# only lets root through unconditionally. In native mode bats runs as an
+# unprivileged user, so any test that configures DOKKU_ACL_*_COMMANDS must go
+# through this wrapper or the hook would reject the test's own commands.
+acl_cli() {
+  $SUDO dokku "$@"
 }
 
-assert_success() {
-  if [ "$status" -ne 0 ]; then
-    flunk "command failed with exit status $status"
-  elif [ "$#" -gt 0 ]; then
-    assert_output "$1"
-  fi
+acl_dir() {
+  echo "/home/dokku/$1/acl"
 }
 
-assert_failure() {
-  if [[ "$status" -eq 0 ]]; then
-    flunk "expected failed exit status"
-  elif [[ "$#" -gt 0 ]]; then
-    assert_output "$1"
-  fi
+acl_file() {
+  echo "$(acl_dir "$1")/$2"
 }
 
-assert_exists() {
-  if [ ! -f "$1" ]; then
-    flunk "expected file to exist: $1"
-  fi
+# Global acl settings are read from ~dokku/.dokkurc/acl, which the dokku CLI
+# sources on every invocation. Each argument is written as one line of that
+# file, e.g. `set_acl_config "export DOKKU_SUPER_USER=admin"`. The file must be
+# readable by the dokku user or every dokku command fails.
+acl_config_path() {
+  echo "/home/dokku/.dokkurc/acl"
 }
 
-assert_contains() {
-  if [[ "$1" != *"$2"* ]]; then
-    flunk "expected $2 to be in: $1"
-  fi
+set_acl_config() {
+  local path
+  path="$(acl_config_path)"
+  $SUDO mkdir -p "$(dirname "$path")"
+  printf '%s\n' "$@" | $SUDO tee "$path" >/dev/null
+  $SUDO chown -R dokku:dokku "$(dirname "$path")"
+  $SUDO chmod 644 "$path"
 }
 
-assert_output() {
-  local expected
-  if [ $# -eq 0 ]; then
-    expected="$(cat -)"
-  else
-    expected="$1"
-  fi
-  assert_equal "$expected" "$output"
+clear_acl_config() {
+  $SUDO rm -f "$(acl_config_path)"
+}
+
+# The plugin only checks that a service's data directory exists, so a bare
+# directory stands in for a real datastore plugin. It is owned by the dokku user
+# so `dokku acl:add-service` can create the acl directory inside it.
+service_root() {
+  echo "/var/lib/dokku/services/$1"
+}
+
+service_dir() {
+  echo "$(service_root "$1")/$2"
+}
+
+new_service_type() {
+  echo "acltest${RANDOM}"
+}
+
+create_service() {
+  local type="$1" service="$2"
+  $SUDO mkdir -p "$(service_dir "$type" "$service")"
+  $SUDO chown -R dokku:dokku "$(service_root "$type")"
+}
+
+cleanup_service_type() {
+  local type="$1"
+  [[ -n "$type" ]] || return 0
+  $SUDO rm -rf "$(service_root "$type")"
+}
+
+# The bats suite never deploys or connects over ssh, so plugin triggers are
+# invoked directly. dokku's CLI normally exports the plugin environment; the
+# bats shell does not, so set it here. Paths are the standard install layout,
+# identical in compose and native modes. The plugin's own trigger scripts are
+# run (rather than `plugn trigger`, which fans out to every plugin) to keep
+# each assertion scoped to acl. DOKKU_API_VERSION makes the plugin's `config`
+# resolve core functions the way it does under the CLI.
+dokku_plugin_env() {
+  $SUDO env \
+    DOKKU_ROOT=/home/dokku \
+    DOKKU_LIB_ROOT=/var/lib/dokku \
+    DOKKU_API_VERSION=1 \
+    DOKKU_NOT_IMPLEMENTED_EXIT=10 \
+    PLUGIN_PATH=/var/lib/dokku/plugins \
+    PLUGIN_AVAILABLE_PATH=/var/lib/dokku/plugins/available \
+    PLUGIN_ENABLED_PATH=/var/lib/dokku/plugins/enabled \
+    PLUGIN_CORE_PATH=/var/lib/dokku/core-plugins \
+    PLUGIN_CORE_AVAILABLE_PATH=/var/lib/dokku/core-plugins/available \
+    "$@"
+}
+
+# Absolute path to an installed plugin trigger/subcommand script.
+plugin_script() {
+  echo "/var/lib/dokku/plugins/available/acl/$1"
+}
+
+# Run a plugin trigger or subcommand script directly (see dokku_plugin_env).
+# Leading VAR=VALUE arguments are passed to the script's environment, which is
+# how tests simulate an ssh user (`NAME=user1`) or global settings
+# (`DOKKU_SUPER_USER=admin`); they must be passed this way rather than exported
+# because sudo drops the caller's environment in native mode. The first
+# remaining argument is the script name under the installed plugin dir; the
+# rest are passed through to it.
+fire_trigger() {
+  local env_overrides=()
+  while [[ "${1:-}" == [A-Z_]*=* ]]; do
+    env_overrides+=("$1")
+    shift
+  done
+  local script="$1"
+  shift
+  dokku_plugin_env "${env_overrides[@]}" "$(plugin_script "$script")" "$@"
 }

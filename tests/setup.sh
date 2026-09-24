@@ -1,39 +1,53 @@
-#!/usr/bin/env bash -x
-set -eo pipefail
-[[ $DOKKU_TRACE ]] && set -x
-source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/test_helper.bash"
+#!/usr/bin/env bash
+# Run inside the dokku container. Installs the plugin from the bind-mounted
+# /plugin-src tree.
+set -euo pipefail
 
-BIN_STUBS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bin"
+PLUGIN_SRC="${PLUGIN_SRC:-/plugin-src}"
 
-if [[ ! -d $DOKKU_ROOT ]]; then
-  git clone https://github.com/dokku/dokku.git $DOKKU_ROOT >/dev/null
+log() { echo "-----> $*"; }
+
+# Older dokku images ship without a healthcheck, so `docker compose up --wait`
+# returns while the container init is still generating dhparam and before
+# runit starts nginx. Every apps:destroy reloads nginx, so wait for it here.
+log "Waiting for nginx to start"
+for _ in $(seq 1 300); do
+  if sv status nginx 2>/dev/null | grep -q '^run:'; then
+    break
+  fi
+  sleep 1
+done
+if ! sv status nginx 2>/dev/null | grep -q '^run:'; then
+  echo "nginx did not start within 300 seconds" >&2
+  exit 1
 fi
 
-cd $DOKKU_ROOT
-echo "Dokku version $DOKKU_VERSION"
-git checkout $DOKKU_VERSION >/dev/null
-if grep go-build Makefile >/dev/null; then
-  mv "$BIN_STUBS/docker" "$BIN_STUBS/docker-stub"
-  make go-build
-  mv "$BIN_STUBS/docker-stub" "$BIN_STUBS/docker"
+if dokku plugin:installed acl; then
+  log "acl plugin already installed; uninstalling first"
+  dokku plugin:uninstall acl
 fi
-cd -
 
-test -f /etc/init.d/nginx || {
-  sudo touch /etc/init.d/nginx
-  sudo chmod +x /etc/init.d/nginx
-}
+# `dokku plugin:install` derives the destination directory name from the
+# basename of the source URL, so stage the bind-mounted source at a path
+# whose basename is `acl` before installing.
+log "Staging plugin source at /tmp/acl"
+rm -rf /tmp/acl
+cp -r "${PLUGIN_SRC}" /tmp/acl
+# the repo's tmp/ scratch dir (compose-mode host state) must not ship inside the plugin
+rm -rf /tmp/acl/tmp
 
-source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
-rm -rf $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX
-mkdir -p $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands
-find ./ -maxdepth 1 -type f -exec cp '{}' $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX \;
-find ./subcommands -maxdepth 1 -type f -exec cp '{}' $DOKKU_ROOT/plugins/$PLUGIN_COMMAND_PREFIX/subcommands \;
-echo "$DOKKU_VERSION" >$DOKKU_ROOT/VERSION
+# `dokku plugin:install` git-clones the URL, which would install committed
+# HEAD rather than the working tree. Re-init the staged copy as a fresh
+# single-commit repo so local uncommitted changes are exercised too.
+rm -rf /tmp/acl/.git
+(
+  cd /tmp/acl
+  git init --quiet
+  git add -A
+  git -c user.name=acltest -c user.email=acltest@dokku.test commit --quiet --message "test snapshot"
+)
 
-if [[ ! -f $BIN_STUBS/plugn ]]; then
-  wget -O- "$PLUGN_URL" | tar xzf - -C "$BIN_STUBS"
-  plugn init
-  find "$DOKKU_ROOT/plugins" -mindepth 1 -maxdepth 1 -type d ! -name 'available' ! -name 'enabled' -exec ln -s {} "$DOKKU_ROOT/plugins/available" \;
-  find "$DOKKU_ROOT/plugins" -mindepth 1 -maxdepth 1 -type d ! -name 'available' ! -name 'enabled' -exec ln -s {} "$DOKKU_ROOT/plugins/enabled" \;
-fi
+log "Installing acl plugin from /tmp/acl"
+dokku plugin:install "file:///tmp/acl"
+
+log "Setup complete"
