@@ -57,6 +57,21 @@ teardown() {
   [[ "$output" == *"$APP2"* ]]
 }
 
+@test "(acl:allowed) lists every app for each of multiple super users" {
+  set_acl_config 'export DOKKU_SUPER_USER="admin admin2"'
+  dokku acl:add "$APP" user1
+  for user in admin admin2; do
+    run dokku acl:allowed "$user"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"$APP"* ]]
+    [[ "$output" == *"$APP2"* ]]
+  done
+
+  run dokku acl:allowed user1
+  [ "$status" -eq 0 ]
+  [ "$output" = "$APP" ]
+}
+
 @test "(acl:allowed) fails without a username" {
   run dokku acl:allowed
   [ "$status" -ne 0 ]

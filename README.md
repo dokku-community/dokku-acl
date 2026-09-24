@@ -54,8 +54,11 @@ using `dokku ssh-keys:add`, this will be done automatically for you.
 
 ### configuring command line usage
 
-By default, dokku commands that modify an app (e.g. `apps:destroy`) work when
-run from the command line on the server. If you want these commands to be
+By default, dokku commands work when run from the command line on the server.
+This includes commands that modify an app (e.g. `apps:destroy`), and commands
+run by cron jobs (e.g. letsencrypt auto-renewal or datastore backups) and
+systemd services (e.g. `dokku-retire`). These commands are not subject to the
+command restrictions below. If you want commands that modify an app to be
 refused from the command line whenever `DOKKU_SUPER_USER` is set, even when run
 as `root` or `dokku`, disable command line access by setting
 `DOKKU_ACL_ALLOW_COMMAND_LINE` to `0`, `false`, `no` or `off` in
@@ -64,6 +67,10 @@ as `root` or `dokku`, disable command line access by setting
 ```shell
 export DOKKU_ACL_ALLOW_COMMAND_LINE=0
 ```
+
+When command line access is disabled, commands run from the command line by
+the `dokku` user are also subject to the command restrictions, and are checked
+as the user `default`. Commands run as `root` are always allowed.
 
 Previous versions of this plugin refused these commands by default when
 `DOKKU_SUPER_USER` was set, unless `DOKKU_ACL_ALLOW_COMMAND_LINE` was defined.
@@ -80,11 +87,19 @@ export DOKKU_SUPER_USER=puck
 
 If defined, this user is always allowed to push, and no other users are allowed to push to apps with empty ACLs.
 
+To define more than one super user, separate the users with spaces:
+
+```shell
+export DOKKU_SUPER_USER="puck ariel"
+```
+
+`dokku acl:report` shows the value as it is set, e.g. `puck ariel`.
+
 ### command restrictions
 
 By default, all users can run all dokku commands. To restrict the commands
-available to non-admin users, whitelist the desired commands in
-`~dokku/.dokkurc/acl`. The following lists of commands can be defined:
+available to non-admin users connecting over ssh, whitelist the desired
+commands in `~dokku/.dokkurc/acl`. The following lists of commands can be defined:
 * Commands in `$DOKKU_ACL_USER_COMMANDS` can be run by any user at any time
 * Commands in `$DOKKU_ACL_PER_APP_COMMANDS` can be run on an app by any user
 with permission to manage that app.

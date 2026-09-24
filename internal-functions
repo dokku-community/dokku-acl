@@ -136,9 +136,7 @@ fn-check-modify-app-acl() {
   local ACL="$DOKKU_ROOT/$APP/acl"
   local DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
 
-  if [[ -z "${NAME:-}" ]]; then
-    # Command line usage doesn't set $NAME.
-
+  if fn-acl-is-command-line; then
     if ! fn-acl-allow-command-line; then
       # Command line usage was explicitly disabled, so only allow it when
       # there is no super user.
@@ -155,8 +153,8 @@ fn-check-modify-app-acl() {
   fi
 
   if [[ ! -d "$ACL" ]]; then
-    if [[ -n "$DOKKU_SUPER_USER" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
-      dokku_log_fail "Only $DOKKU_SUPER_USER can modify a repository if the ACL is empty"
+    if [[ -n "$DOKKU_SUPER_USER" ]] && ! fn-acl-is-super-user "$NAME"; then
+      dokku_log_fail "Only $(fn-acl-super-users-list) can modify a repository if the ACL is empty"
     fi
 
     exit 0 # all good, there are no restrictions
@@ -164,10 +162,19 @@ fn-check-modify-app-acl() {
 
   local ACL_FILE="$ACL/$NAME"
 
-  if [[ ! -f "$ACL_FILE" ]] && [[ "$NAME" != "$DOKKU_SUPER_USER" ]]; then
+  if [[ ! -f "$ACL_FILE" ]] && ! fn-acl-is-super-user "$NAME"; then
     echo "User $NAME does not have permissions to modify this repository" >&2
     exit 2
   fi
+}
+
+fn-acl-is-command-line() {
+  declare desc="check if the current dokku command was run from the command line"
+
+  # Only ssh connections set $NAME. dokku core authenticates everything else,
+  # such as cron jobs and systemd services, as the "default" SSH_NAME, but it
+  # does not export NAME, so hooks and nested dokku calls still see it empty.
+  [[ -z "${NAME:-}" ]]
 }
 
 fn-acl-allow-command-line() {
@@ -186,10 +193,22 @@ fn-acl-allow-command-line() {
 fn-acl-is-super-user() {
   declare desc="check if the specified user is a super user"
   declare USERNAME="$1"
+  local super_user
 
-  if [[ "$USERNAME" == "$DOKKU_SUPER_USER" ]]; then
-    return
-  fi
+  for super_user in ${DOKKU_SUPER_USER:-}; do
+    if [[ "$USERNAME" == "$super_user" ]]; then
+      return
+    fi
+  done
 
   return 1
+}
+
+fn-acl-super-users-list() {
+  declare desc="print the super users as a comma-separated list"
+  local super_users list
+
+  read -ra super_users <<<"${DOKKU_SUPER_USER:-}"
+  printf -v list '%s, ' "${super_users[@]}"
+  echo "${list%, }"
 }
