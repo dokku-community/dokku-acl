@@ -176,3 +176,25 @@ teardown() {
   [ "$status" -ne 0 ]
   [[ "$output" == *"This command can only be run using the local dokku command on the target host"* ]]
 }
+
+@test "(acl:add-service) rejects user names that escape the acl directory" {
+  for user in . .. ../other user/other; do
+    run dokku acl:add-service "$TYPE" "$SERVICE" "$user"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Invalid user name: $user"* ]]
+  done
+  $SUDO test ! -d "$(service_dir "$TYPE" "$SERVICE")/acl"
+  $SUDO test ! -e "$(service_dir "$TYPE" "$SERVICE")/other"
+}
+
+@test "(acl:remove-service) rejects user names that escape the acl directory" {
+  dokku acl:add-service "$TYPE" "$SERVICE" user1
+  $SUDO touch "$(service_dir "$TYPE" "$SERVICE")/data"
+  for user in . .. ../data user1/other; do
+    run dokku acl:remove-service "$TYPE" "$SERVICE" "$user"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Invalid user name: $user"* ]]
+  done
+  $SUDO test -f "$(service_dir "$TYPE" "$SERVICE")/data"
+  $SUDO test -f "$(service_dir "$TYPE" "$SERVICE")/acl/user1"
+}

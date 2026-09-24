@@ -24,6 +24,7 @@ cmd-acl-add-service() {
   if [[ -z "$USER" ]]; then
     dokku_log_fail "Please specify a user name"
   fi
+  fn-acl-validate-user "$USER"
 
   [[ ! -d "$ACL_PATH" ]] && mkdir -p "$ACL_PATH"
 

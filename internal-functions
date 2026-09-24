@@ -98,6 +98,15 @@ fn-acl-check-service() {
   fi
 }
 
+fn-acl-validate-user() {
+  declare desc="fail unless the user name is safe to use as a file in an acl directory"
+  declare USERNAME="$1"
+
+  if [[ -z "$USERNAME" ]] || [[ "$USERNAME" == *"/"* ]] || [[ "$USERNAME" == "." ]] || [[ "$USERNAME" == ".." ]]; then
+    dokku_log_fail "Invalid user name: $USERNAME"
+  fi
+}
+
 fn-check-app-acl() {
   declare desc="Checks if the current user has an ACL entry for the app"
   declare APP="$1" SSH_NAME="$2"

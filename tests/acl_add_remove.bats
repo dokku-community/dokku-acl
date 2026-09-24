@@ -91,3 +91,25 @@ teardown() {
   [[ "$output" == *"$ACL_SSH_MODIFY_ERROR"* ]]
   $SUDO test -f "$(acl_file "$APP" user1)"
 }
+
+@test "(acl:add) rejects user names that escape the acl directory" {
+  for user in . .. ../ENV user/other; do
+    run dokku acl:add "$APP" "$user"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Invalid user name: $user"* ]]
+  done
+  $SUDO test ! -d "$(acl_dir "$APP")"
+  $SUDO test ! -e "/home/dokku/$APP/other"
+}
+
+@test "(acl:remove) rejects user names that escape the acl directory" {
+  dokku acl:add "$APP" user1
+  $SUDO touch "/home/dokku/$APP/ENV"
+  for user in . .. ../ENV user1/other; do
+    run dokku acl:remove "$APP" "$user"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"Invalid user name: $user"* ]]
+  done
+  $SUDO test -f "/home/dokku/$APP/ENV"
+  $SUDO test -f "$(acl_file "$APP" user1)"
+}

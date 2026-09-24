@@ -24,6 +24,7 @@ cmd-acl-remove-service() {
   if [[ -z "$USER" ]]; then
     dokku_log_fail "Please specify a user name"
   fi
+  fn-acl-validate-user "$USER"
 
   [[ -f "$ACL_FILE" ]] && rm "$ACL_FILE";
   if [[ -d "$ACL_PATH" ]] && [[ -z "$(ls "$ACL_PATH")" ]]; then
