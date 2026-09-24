@@ -1,4 +1,4 @@
-# dokku-acl [![Build Status](https://img.shields.io/travis/dokku-community/dokku-acl.svg?branch=master "Build Status")](https://travis-ci.org/dokku-community/dokku-acl)
+# dokku-acl [![ci](https://github.com/dokku-community/dokku-acl/actions/workflows/ci.yml/badge.svg)](https://github.com/dokku-community/dokku-acl/actions/workflows/ci.yml)
 
 *Access Control List management for Dokku.*
 
@@ -8,7 +8,7 @@ hosting. (See below for notes and limitations.)
 
 ## requirements
 
-- dokku 0.32.0+
+- dokku 0.35.0+
 - docker 1.8.x
 
 - An older version of this plugin works with dokku 0.3.x; the last version
@@ -23,13 +23,14 @@ dokku plugin:install https://github.com/dokku-community/dokku-acl.git acl
 ## commands
 
 ```shell
-acl:add <app> <user>      Allow <user> to access <app>
-acl:allowed <user>        List apps the user has access to
-acl:list <app>            Show list of users with access to <app>
-acl:remove <app> <user>   Revoke <user>'s access to <app>
+acl:add <app> <user>          Allow <user> to access <app>
+acl:allowed <user>            List apps the user has access to
+acl:list <app>                Show list of users with access to <app>
+acl:remove <app> <user>       Revoke <user>'s access to <app>
+acl:report [<app>] [<flag>]   Displays an acl report for one or more apps
 
 acl:add-service <type> <service> <user>      Allow <user> to access <service> of type <type>
-acl:allowed-service <type> <user>            List services of type <type> that the user has access to
+acl:allowed-services <type> <user>           List services of type <type> that the user has access to
 acl:list-service <type> <service>            Show list of users with access to <service> of type <type>
 acl:remove-service <type> <service> <user>   Revoke <user>'s access to <service> of type <type>
 ```
