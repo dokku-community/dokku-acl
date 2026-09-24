@@ -15,6 +15,18 @@ setup() {
 teardown() {
   clear_acl_config
   cleanup_service_type "$TYPE"
+  [ -n "${PRIVATE_DIR:-}" ] && rm -rf "$PRIVATE_DIR"
+  return 0
+}
+
+@test "(acl:allowed-services) works from a working directory the dokku user cannot access" {
+  dokku acl:add-service "$TYPE" "$SERVICE" user1
+  PRIVATE_DIR="$(private_dir)"
+  cd "$PRIVATE_DIR"
+  run dokku acl:allowed-services "$TYPE" user1
+  cd - >/dev/null
+  [ "$status" -eq 0 ]
+  [ "$output" = "$SERVICE" ]
 }
 
 @test "(acl:add-service) adds a user to the service acl" {

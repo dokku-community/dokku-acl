@@ -37,12 +37,14 @@ cmd-acl-allowed-services() {
     return
   fi
 
-  pushd "$PLUGIN_DATA_ROOT" >/dev/null
-  local acl_file
-  for acl_file in */acl/"$USERNAME"; do
-    [[ -f "$acl_file" ]] && echo "${acl_file%%/*}"
+  # glob on absolute paths rather than changing directory: returning to the
+  # caller's working directory fails when the dokku user cannot access it
+  local acl_file entry
+  for acl_file in "$PLUGIN_DATA_ROOT"/*/acl/"$USERNAME"; do
+    [[ -f "$acl_file" ]] || continue
+    entry="${acl_file#"$PLUGIN_DATA_ROOT/"}"
+    echo "${entry%%/*}"
   done
-  popd >/dev/null
 }
 
 cmd-acl-allowed-services "$@"

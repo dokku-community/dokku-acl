@@ -13,6 +13,18 @@ teardown() {
   clear_acl_config
   cleanup_app "$APP"
   cleanup_app "$APP2"
+  [ -n "${PRIVATE_DIR:-}" ] && rm -rf "$PRIVATE_DIR"
+  return 0
+}
+
+@test "(acl:allowed) works from a working directory the dokku user cannot access" {
+  dokku acl:add "$APP" user1
+  PRIVATE_DIR="$(private_dir)"
+  cd "$PRIVATE_DIR"
+  run dokku acl:allowed user1
+  cd - >/dev/null
+  [ "$status" -eq 0 ]
+  [ "$output" = "$APP" ]
 }
 
 @test "(acl:allowed) lists only the apps the user has access to" {

@@ -63,6 +63,17 @@ clear_acl_config() {
   $SUDO rm -f "$(acl_config_path)"
 }
 
+# Create a directory only the invoking user can access and echo its path. Used
+# to run the CLI from a working directory the dokku user cannot enter, as when
+# an operator runs dokku from their own home directory. Callers should
+# `rm -rf` the returned path in teardown.
+private_dir() {
+  local dir
+  dir="$(mktemp -d)"
+  chmod 700 "$dir"
+  echo "$dir"
+}
+
 # The plugin only checks that a service's data directory exists, so a bare
 # directory stands in for a real datastore plugin. It is owned by the dokku user
 # so `dokku acl:add-service` can create the acl directory inside it.
