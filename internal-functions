@@ -36,7 +36,7 @@ cmd-acl-report-single() {
   verify_app_name "$APP"
   local flag_map=(
     "--acl-allowed-users: $(fn-acl-allowed-users "$APP")"
-    "--acl-global-allow-command-line: ${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
+    "--acl-global-allow-command-line: $(fn-acl-allow-command-line && echo true || echo false)"
     "--acl-global-super-user: ${DOKKU_SUPER_USER:-}"
     "--acl-global-user-commands: ${DOKKU_ACL_USER_COMMANDS:-}"
     "--acl-global-per-app-commands: ${DOKKU_ACL_PER_APP_COMMANDS:-}"
@@ -135,20 +135,20 @@ fn-check-modify-app-acl() {
 
   local ACL="$DOKKU_ROOT/$APP/acl"
   local DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
-  local DOKKU_ACL_ALLOW_COMMAND_LINE="${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
 
-  if [[ -z "$NAME" ]]; then
+  if [[ -z "${NAME:-}" ]]; then
     # Command line usage doesn't set $NAME.
 
-    if [[ -z "$DOKKU_ACL_ALLOW_COMMAND_LINE" ]]; then
-      # Preserve legacy behaviour by default for safety, even though it's weird.
+    if ! fn-acl-allow-command-line; then
+      # Command line usage was explicitly disabled, so only allow it when
+      # there is no super user.
 
       [[ -z "$DOKKU_SUPER_USER" ]] && exit 0
 
       dokku_log_fail "It appears that you're running this command from the command" \
-        "line.  The \"dokku-acl\" plugin disables this by default for" \
-        "safety.  Please check the \"dokku-acl\" documentation for how" \
-        "to enable command line usage."
+        "line, which is disabled because DOKKU_ACL_ALLOW_COMMAND_LINE is set" \
+        "to \"$DOKKU_ACL_ALLOW_COMMAND_LINE\".  Unset it to enable command" \
+        "line usage."
     fi
 
     exit 0
@@ -168,6 +168,19 @@ fn-check-modify-app-acl() {
     echo "User $NAME does not have permissions to modify this repository" >&2
     exit 2
   fi
+}
+
+fn-acl-allow-command-line() {
+  declare desc="check if dokku commands may modify apps from the command line"
+  local value="${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
+
+  case "${value,,}" in
+    0 | false | no | off)
+      return 1
+      ;;
+  esac
+
+  return 0
 }
 
 fn-acl-is-super-user() {

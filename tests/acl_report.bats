@@ -60,7 +60,7 @@ teardown() {
 
   run acl_cli acl:report "$APP" --acl-global-allow-command-line
   [ "$status" -eq 0 ]
-  [ "$output" = "1" ]
+  [ "$output" = "true" ]
 
   run acl_cli acl:report "$APP" --acl-global-super-user
   [ "$status" -eq 0 ]
@@ -81,6 +81,17 @@ teardown() {
   run acl_cli acl:report "$APP" --acl-global-link-commands
   [ "$status" -eq 0 ]
   [ "$output" = "redis:link redis:unlink" ]
+}
+
+@test "(acl:report) --acl-global-allow-command-line reports the effective setting" {
+  run dokku acl:report "$APP" --acl-global-allow-command-line
+  [ "$status" -eq 0 ]
+  [ "$output" = "true" ]
+
+  set_acl_config "export DOKKU_ACL_ALLOW_COMMAND_LINE=0"
+  run acl_cli acl:report "$APP" --acl-global-allow-command-line
+  [ "$status" -eq 0 ]
+  [ "$output" = "false" ]
 }
 
 @test "(acl:report) fails on an invalid flag and lists the valid ones" {
