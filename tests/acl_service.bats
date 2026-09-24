@@ -13,7 +13,7 @@ setup() {
 }
 
 teardown() {
-  clear_acl_config
+  clear_acl_properties
   cleanup_service_type "$TYPE"
   [ -n "${PRIVATE_DIR:-}" ] && rm -rf "$PRIVATE_DIR"
   return 0
@@ -134,7 +134,7 @@ teardown() {
 }
 
 @test "(acl:allowed-services) lists every service of the type for the super user" {
-  set_acl_config "export DOKKU_SUPER_USER=admin"
+  set_acl_property super-user admin
   run dokku acl:allowed-services "$TYPE" admin
   [ "$status" -eq 0 ]
   [ "${lines[0]}" = "$SERVICE" ]
@@ -142,7 +142,7 @@ teardown() {
 }
 
 @test "(acl:allowed-services) lists every service of the type for each of multiple super users" {
-  set_acl_config 'export DOKKU_SUPER_USER="admin admin2"'
+  set_acl_property super-user admin admin2
   for user in admin admin2; do
     run dokku acl:allowed-services "$TYPE" "$user"
     [ "$status" -eq 0 ]

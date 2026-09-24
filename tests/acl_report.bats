@@ -8,7 +8,7 @@ setup() {
 }
 
 teardown() {
-  clear_acl_config
+  clear_acl_properties
   acl_cli --force apps:destroy "$APP" >/dev/null 2>&1 || true
 }
 
@@ -49,14 +49,13 @@ teardown() {
   [ -z "$output" ]
 }
 
-@test "(acl:report) reports the global settings from the dokkurc" {
-  set_acl_config \
-    "export DOKKU_ACL_ALLOW_COMMAND_LINE=1" \
-    "export DOKKU_SUPER_USER=admin" \
-    'export DOKKU_ACL_USER_COMMANDS="help version"' \
-    'export DOKKU_ACL_PER_APP_COMMANDS="logs urls"' \
-    'export DOKKU_ACL_PER_SERVICE_COMMANDS="redis:info"' \
-    'export DOKKU_ACL_LINK_COMMANDS="redis:link redis:unlink"'
+@test "(acl:report) reports the global settings from the acl properties" {
+  set_acl_property allow-command-line true
+  set_acl_property super-user admin
+  set_acl_property user-commands help version
+  set_acl_property per-app-commands logs urls
+  set_acl_property per-service-commands redis:info
+  set_acl_property link-commands redis:link redis:unlink
 
   run acl_cli acl:report "$APP" --acl-global-allow-command-line
   [ "$status" -eq 0 ]
@@ -88,7 +87,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [ "$output" = "true" ]
 
-  set_acl_config "export DOKKU_ACL_ALLOW_COMMAND_LINE=0"
+  set_acl_property allow-command-line false
   run acl_cli acl:report "$APP" --acl-global-allow-command-line
   [ "$status" -eq 0 ]
   [ "$output" = "false" ]

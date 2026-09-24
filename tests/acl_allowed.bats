@@ -10,7 +10,7 @@ setup() {
 }
 
 teardown() {
-  clear_acl_config
+  clear_acl_properties
   cleanup_app "$APP"
   cleanup_app "$APP2"
   [ -n "${PRIVATE_DIR:-}" ] && rm -rf "$PRIVATE_DIR"
@@ -49,7 +49,7 @@ teardown() {
 }
 
 @test "(acl:allowed) lists every app for the super user" {
-  set_acl_config "export DOKKU_SUPER_USER=admin"
+  set_acl_property super-user admin
   dokku acl:add "$APP" user1
   run dokku acl:allowed admin
   [ "$status" -eq 0 ]
@@ -58,7 +58,7 @@ teardown() {
 }
 
 @test "(acl:allowed) lists every app for each of multiple super users" {
-  set_acl_config 'export DOKKU_SUPER_USER="admin admin2"'
+  set_acl_property super-user admin admin2
   dokku acl:add "$APP" user1
   for user in admin admin2; do
     run dokku acl:allowed "$user"
