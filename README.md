@@ -87,6 +87,14 @@ export DOKKU_SUPER_USER=puck
 
 If defined, this user is always allowed to push, and no other users are allowed to push to apps with empty ACLs.
 
+To define more than one super user, separate the users with spaces:
+
+```shell
+export DOKKU_SUPER_USER="puck ariel"
+```
+
+`dokku acl:report` shows the value as it is set, e.g. `puck ariel`.
+
 ### command restrictions
 
 By default, all users can run all dokku commands. To restrict the commands

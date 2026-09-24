@@ -87,6 +87,33 @@ MODIFY_HOOKS="pre-build pre-delete pre-receive-app"
   done
 }
 
+@test "(pre-build, pre-delete, pre-receive-app) allow each of multiple super users" {
+  for hook in $MODIFY_HOOKS; do
+    for user in admin admin2; do
+      run fire_modify_hook NAME="$user" DOKKU_SUPER_USER="admin admin2" "$hook" "$APP"
+      [ "$status" -eq 0 ]
+    done
+
+    for user in user1 adm; do
+      run fire_modify_hook NAME="$user" DOKKU_SUPER_USER="admin admin2" "$hook" "$APP"
+      [ "$status" -ne 0 ]
+      [[ "$output" == *"Only admin, admin2 can modify a repository if the ACL is empty"* ]]
+    done
+  done
+
+  dokku acl:add "$APP" user1
+  for hook in $MODIFY_HOOKS; do
+    for user in admin admin2 user1; do
+      run fire_modify_hook NAME="$user" DOKKU_SUPER_USER="admin admin2" "$hook" "$APP"
+      [ "$status" -eq 0 ]
+    done
+
+    run fire_modify_hook NAME=user2 DOKKU_SUPER_USER="admin admin2" "$hook" "$APP"
+    [ "$status" -eq 2 ]
+    [ "$output" = "User user2 does not have permissions to modify this repository" ]
+  done
+}
+
 @test "(pre-build, pre-delete, pre-receive-app) allow command line usage by default" {
   for hook in $MODIFY_HOOKS; do
     run fire_modify_hook "$hook" "$APP"

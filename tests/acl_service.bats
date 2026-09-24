@@ -141,6 +141,20 @@ teardown() {
   [ "${lines[1]}" = "$SERVICE2" ]
 }
 
+@test "(acl:allowed-services) lists every service of the type for each of multiple super users" {
+  set_acl_config 'export DOKKU_SUPER_USER="admin admin2"'
+  for user in admin admin2; do
+    run dokku acl:allowed-services "$TYPE" "$user"
+    [ "$status" -eq 0 ]
+    [ "${lines[0]}" = "$SERVICE" ]
+    [ "${lines[1]}" = "$SERVICE2" ]
+  done
+
+  run dokku acl:allowed-services "$TYPE" user1
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
 @test "(acl:allowed-services) fails without a type or username" {
   run dokku acl:allowed-services
   [ "$status" -ne 0 ]

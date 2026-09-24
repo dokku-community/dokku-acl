@@ -282,3 +282,31 @@ create_redis_service() {
   [ "$status" -ne 0 ]
   [[ "$output" == *"User default does not have permissions to run apps:list"* ]]
 }
+
+@test "(user-auth) each of multiple super users can run any command" {
+  local restrictions=(
+    DOKKU_ACL_USER_COMMANDS="$ALLOWED_CMDS"
+    DOKKU_ACL_PER_APP_COMMANDS="$PER_APP_CMDS"
+    DOKKU_SUPER_USER="admin admin2"
+  )
+
+  for user in admin admin2; do
+    for cmd in $ALL_CMDS; do
+      run user_auth "${restrictions[@]}" user-auth dokku "$user" "$cmd"
+      [ "$status" -eq 0 ]
+    done
+
+    for cmd in $PER_APP_CMDS; do
+      run user_auth "${restrictions[@]}" user-auth dokku "$user" "$cmd" "$APP"
+      [ "$status" -eq 0 ]
+    done
+  done
+
+  for user in user1 adm; do
+    for cmd in $RESTRICTED_CMDS; do
+      run user_auth "${restrictions[@]}" user-auth dokku "$user" "$cmd"
+      [ "$status" -ne 0 ]
+      [[ "$output" == *"User $user does not have permissions to run $cmd"* ]]
+    done
+  done
+}
