@@ -28,7 +28,7 @@ cleanup_app() {
 # Run the dokku CLI as root. The CLI records the invoking user as SSH_USER
 # before re-executing itself as the dokku user, and the plugin's user-auth hook
 # only lets root through unconditionally. In native mode bats runs as an
-# unprivileged user, so any test that configures DOKKU_ACL_*_COMMANDS must go
+# unprivileged user, so any test that sets the *-commands acl properties must go
 # through this wrapper or the hook would reject the test's own commands.
 acl_cli() {
   $SUDO dokku "$@"
@@ -42,10 +42,27 @@ acl_file() {
   echo "$(acl_dir "$1")/$2"
 }
 
-# Global acl settings are read from ~dokku/.dokkurc/acl, which the dokku CLI
-# sources on every invocation. Each argument is written as one line of that
-# file, e.g. `set_acl_config "export DOKKU_SUPER_USER=admin"`. The file must be
-# readable by the dokku user or every dokku command fails.
+# Global acl settings are stored as global properties of the acl plugin, e.g.
+# `set_acl_property super-user admin admin2`. It goes through the CLI as root
+# so it works even when the settings restrict the dokku user.
+set_acl_property() {
+  acl_cli acl:set --global "$@"
+}
+
+acl_properties_dir() {
+  echo "/var/lib/dokku/config/acl/--global"
+}
+
+clear_acl_properties() {
+  $SUDO rm -rf "$(acl_properties_dir)"
+}
+
+# Before global settings were properties, they were read from
+# ~dokku/.dokkurc/acl, which the dokku CLI sources on every invocation. The
+# install trigger imports them from there once, so this is only used by the
+# migration tests. Each argument is written as one line of that file, e.g.
+# `set_acl_config "export DOKKU_SUPER_USER=admin"`. The file must be readable
+# by the dokku user or every dokku command fails.
 acl_config_path() {
   echo "/home/dokku/.dokkurc/acl"
 }
@@ -129,11 +146,11 @@ plugin_script() {
 
 # Run a plugin trigger or subcommand script directly (see dokku_plugin_env).
 # Leading VAR=VALUE arguments are passed to the script's environment, which is
-# how tests simulate an ssh user (`NAME=user1`) or global settings
-# (`DOKKU_SUPER_USER=admin`); they must be passed this way rather than exported
-# because sudo drops the caller's environment in native mode. The first
-# remaining argument is the script name under the installed plugin dir; the
-# rest are passed through to it.
+# how tests simulate an ssh user (`NAME=user1`) or the dokkurc variables the
+# install trigger migrates (`DOKKU_SUPER_USER=admin`); they must be passed this
+# way rather than exported because sudo drops the caller's environment in
+# native mode. The first remaining argument is the script name under the
+# installed plugin dir; the rest are passed through to it.
 fire_trigger() {
   local env_overrides=()
   while [[ "${1:-}" == [A-Z_]*=* ]]; do

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# When enabled via the DOKKU_ACL_USER_COMMANDS variable, allow normal users
+# When any of the global *-commands acl properties are set, allow normal users
 # to run only these commands.
 
 set -eo pipefail
@@ -8,28 +8,28 @@ set -eo pipefail
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 source "$(dirname "${BASH_SOURCE[0]}")/internal-functions"
 
-DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
-DOKKU_ACL_USER_COMMANDS="${DOKKU_ACL_USER_COMMANDS:-}"
-DOKKU_ACL_PER_APP_COMMANDS="${DOKKU_ACL_PER_APP_COMMANDS:-}"
-DOKKU_ACL_PER_SERVICE_COMMANDS="${DOKKU_ACL_PER_SERVICE_COMMANDS:-}"
-DOKKU_ACL_LINK_COMMANDS="${DOKKU_ACL_LINK_COMMANDS:-}"
+fn-acl-load-global-properties
+USER_COMMANDS="$(fn-acl-global-property user-commands)"
+PER_APP_COMMANDS="$(fn-acl-global-property per-app-commands)"
+PER_SERVICE_COMMANDS="$(fn-acl-global-property per-service-commands)"
+LINK_COMMANDS="$(fn-acl-global-property link-commands)"
 
 SSH_USER=$1
 SSH_NAME=$2
 shift 2
 
-[[ -z "$DOKKU_ACL_USER_COMMANDS" && -z "$DOKKU_ACL_PER_APP_COMMANDS" && -z "$DOKKU_ACL_PER_SERVICE_COMMANDS" && -z "$DOKKU_ACL_LINK_COMMANDS" ]] && exit 0
+[[ -z "$USER_COMMANDS" && -z "$PER_APP_COMMANDS" && -z "$PER_SERVICE_COMMANDS" && -z "$LINK_COMMANDS" ]] && exit 0
 [[ "$SSH_USER" == "root" ]] && exit 0
 fn-acl-is-command-line && fn-acl-allow-command-line && exit 0
 fn-acl-is-super-user "$SSH_NAME" && exit 0
 
 CMD=$1
 
-for allowed in $DOKKU_ACL_USER_COMMANDS; do
+for allowed in $USER_COMMANDS; do
   [[ "$CMD" == "$allowed" ]] && exit 0
 done
 
-for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
+for allowed in $PER_APP_COMMANDS; do
   if [[ "$CMD" == "$allowed" ]]; then
     if [[ -z "$2" ]]; then
       dokku_log_fail "An app name is required"
@@ -40,7 +40,7 @@ for allowed in $DOKKU_ACL_PER_APP_COMMANDS; do
   fi
 done
 
-for allowed in $DOKKU_ACL_PER_SERVICE_COMMANDS; do
+for allowed in $PER_SERVICE_COMMANDS; do
   if [[ "$CMD" == "$allowed" ]]; then
     if [[ -z "$2" ]]; then
       dokku_log_fail "A service name is required"
@@ -50,7 +50,7 @@ for allowed in $DOKKU_ACL_PER_SERVICE_COMMANDS; do
   fi
 done
 
-for allowed in $DOKKU_ACL_LINK_COMMANDS; do
+for allowed in $LINK_COMMANDS; do
   if [[ "$CMD" == "$allowed" ]]; then
     if [[ -z "$2" ]]; then
       dokku_log_fail "A service name is required"

@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/config"
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_BASE_PATH/common/functions"
+source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
+
+cmd-acl-set() {
+  #E only allow the admin user to push to apps with an empty acl
+  #E dokku $PLUGIN_COMMAND_PREFIX:set --global super-user admin
+  #E refuse app changes from the command line while a super user is set
+  #E dokku $PLUGIN_COMMAND_PREFIX:set --global allow-command-line false
+  #E only allow normal users to run the help and version commands
+  #E dokku $PLUGIN_COMMAND_PREFIX:set --global user-commands help version
+  #E unset the per-app commands
+  #E dokku $PLUGIN_COMMAND_PREFIX:set --global per-app-commands
+  #A key, the property to set: super-user allow-command-line user-commands per-app-commands per-service-commands link-commands
+  #A value, zero or more values to set; leave empty to unset the key
+  #F -g|--global, set the property globally (required)
+  declare desc="set or clear a global acl property"
+  local cmd="$PLUGIN_COMMAND_PREFIX:set" argv=("$@")
+  [[ ${argv[0]} == "$cmd" ]] && shift 1
+  declare GLOBAL_FLAG="$1" KEY="$2" VALUE_LIST=("${@:3}")
+  local VALID_KEYS=("super-user" "allow-command-line" "user-commands" "per-app-commands" "per-service-commands" "link-commands")
+  local VALUE user words
+
+  if [[ "$GLOBAL_FLAG" != "--global" ]] && [[ "$GLOBAL_FLAG" != "-g" ]]; then
+    dokku_log_fail "Only global acl properties are supported, please specify --global"
+  fi
+
+  fn-acl-check-local
+
+  [[ -z "$KEY" ]] && dokku_log_fail "No key specified"
+  if ! fn-in-array "$KEY" "${VALID_KEYS[@]}"; then
+    dokku_log_fail "Invalid key specified, valid keys include: ${VALID_KEYS[*]}"
+  fi
+
+  # split and rejoin so quoted and unquoted lists are stored the same way
+  read -ra words <<<"${VALUE_LIST[*]}"
+  VALUE="${words[*]}"
+  if [[ "$KEY" == "allow-command-line" ]] && [[ -n "$VALUE" ]] && [[ "$VALUE" != "true" ]] && [[ "$VALUE" != "false" ]]; then
+    dokku_log_fail "Invalid value for allow-command-line, valid values are: true, false"
+  fi
+
+  if [[ "$KEY" == "super-user" ]]; then
+    for user in $VALUE; do
+      fn-acl-validate-user "$user"
+    done
+  fi
+
+  if [[ -n "$VALUE" ]]; then
+    dokku_log_info2_quiet "Setting ${KEY} to ${VALUE}"
+    fn-plugin-property-write "acl" "--global" "$KEY" "$VALUE"
+  else
+    dokku_log_info2_quiet "Unsetting ${KEY}"
+    fn-plugin-property-delete "acl" "--global" "$KEY"
+  fi
+}
+
+cmd-acl-set "$@"

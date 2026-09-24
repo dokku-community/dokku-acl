@@ -17,7 +17,7 @@ COMPOSE_COMPOSE_MODE := $(COMPOSE) --profile compose-mode
 COMPOSE_EXEC_DOKKU := $(COMPOSE) exec -T dokku
 
 PLUGIN_BASH_FILES := commands config common-functions help-functions internal-functions \
-	pre-build pre-delete pre-receive-app user-auth \
+	install pre-build pre-delete pre-receive-app update user-auth \
 	$(wildcard subcommands/*) \
 	tests/setup.sh tests/setup-native.sh tests/test_helper.bash
 

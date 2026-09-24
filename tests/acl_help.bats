@@ -16,7 +16,7 @@ load 'test_helper'
 @test "(acl:help) lists every subcommand" {
   run dokku acl:help
   [ "$status" -eq 0 ]
-  for subcommand in add add-service allowed allowed-services list list-service remove remove-service report set-service-users set-users; do
+  for subcommand in add add-service allowed allowed-services list list-service remove remove-service report set set-service-users set-users; do
     [[ "$output" == *"acl:${subcommand} "* ]]
   done
 }
@@ -56,4 +56,15 @@ load 'test_helper'
   [ "$status" -eq 0 ]
   [[ "$output" == *"dokku acl:set-service-users <service-type> <service> <user...>"* ]]
   [[ "$output" == *"dokku acl:set-service-users redis birds servuser admin"* ]]
+}
+
+@test "(acl:help) shows the usage for the set subcommand" {
+  run dokku acl:help set
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"dokku acl:set "*"--global"*"<key> <value...>"* ]]
+  [[ "$output" == *"set or clear a global acl property"* ]]
+  [[ "$output" == *"the property to set: super-user allow-command-line user-commands"* ]]
+  [[ "$output" == *"leave empty to unset the key"* ]]
+  [[ "$output" == *"dokku acl:set --global super-user admin"* ]]
+  [[ "$output" == *"dokku acl:set --global user-commands help version"* ]]
 }

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/property-functions"
 set -eo pipefail
 [[ $DOKKU_TRACE ]] && set -x
 
@@ -34,14 +35,17 @@ cmd-acl-report-single() {
     INFO_FLAG=""
   fi
   verify_app_name "$APP"
+  # load here rather than inside the substitutions below, which run in
+  # subshells that would each reload the properties
+  fn-acl-load-global-properties
   local flag_map=(
     "--acl-allowed-users: $(fn-acl-allowed-users "$APP")"
     "--acl-global-allow-command-line: $(fn-acl-allow-command-line && echo true || echo false)"
-    "--acl-global-super-user: ${DOKKU_SUPER_USER:-}"
-    "--acl-global-user-commands: ${DOKKU_ACL_USER_COMMANDS:-}"
-    "--acl-global-per-app-commands: ${DOKKU_ACL_PER_APP_COMMANDS:-}"
-    "--acl-global-per-service-commands: ${DOKKU_ACL_PER_SERVICE_COMMANDS:-}"
-    "--acl-global-link-commands: ${DOKKU_ACL_LINK_COMMANDS:-}"
+    "--acl-global-super-user: $(fn-acl-global-property super-user)"
+    "--acl-global-user-commands: $(fn-acl-global-property user-commands)"
+    "--acl-global-per-app-commands: $(fn-acl-global-property per-app-commands)"
+    "--acl-global-per-service-commands: $(fn-acl-global-property per-service-commands)"
+    "--acl-global-link-commands: $(fn-acl-global-property link-commands)"
   )
 
   if [[ -z "$INFO_FLAG" ]]; then
@@ -75,14 +79,19 @@ fn-acl-allowed-users() {
   find "$ACL_PATH" -mindepth 1 -maxdepth 1 -type f -printf "%f\n" | sort | xargs
 }
 
-fn-acl-check-app() {
-  declare APP="$1"
-
-  verify_app_name "$APP"
+fn-acl-check-local() {
+  declare desc="fail unless the command is run locally rather than over ssh"
 
   if [[ -n "${NAME:-}" ]]; then
     dokku_log_fail "You can only modify ACL using local dokku command on target host"
   fi
+}
+
+fn-acl-check-app() {
+  declare APP="$1"
+
+  verify_app_name "$APP"
+  fn-acl-check-local
 }
 
 fn-acl-check-service() {
@@ -93,9 +102,7 @@ fn-acl-check-service() {
     dokku_log_fail "Service $SERVICE of type $SERVICE_TYPE does not exist"
   fi
 
-  if [[ -n "${NAME:-}" ]]; then
-    dokku_log_fail "You can only modify ACL using local dokku command on target host"
-  fi
+  fn-acl-check-local
 }
 
 fn-acl-validate-user() {
@@ -176,26 +183,29 @@ fn-check-modify-app-acl() {
   declare APP="$1"
 
   local ACL="$DOKKU_ROOT/$APP/acl"
-  local DOKKU_SUPER_USER="${DOKKU_SUPER_USER:-}"
+  local SUPER_USER
+
+  fn-acl-load-global-properties
+  SUPER_USER="$(fn-acl-global-property super-user)"
 
   if fn-acl-is-command-line; then
     if ! fn-acl-allow-command-line; then
       # Command line usage was explicitly disabled, so only allow it when
       # there is no super user.
 
-      [[ -z "$DOKKU_SUPER_USER" ]] && exit 0
+      [[ -z "$SUPER_USER" ]] && exit 0
 
       dokku_log_fail "It appears that you're running this command from the command" \
-        "line, which is disabled because DOKKU_ACL_ALLOW_COMMAND_LINE is set" \
-        "to \"$DOKKU_ACL_ALLOW_COMMAND_LINE\".  Unset it to enable command" \
-        "line usage."
+        "line, which is disabled because the acl allow-command-line property" \
+        "is set to false.  Run 'sudo dokku acl:set --global allow-command-line true'" \
+        "to enable command line usage."
     fi
 
     exit 0
   fi
 
   if [[ ! -d "$ACL" ]]; then
-    if [[ -n "$DOKKU_SUPER_USER" ]] && ! fn-acl-is-super-user "$NAME"; then
+    if [[ -n "$SUPER_USER" ]] && ! fn-acl-is-super-user "$NAME"; then
       dokku_log_fail "Only $(fn-acl-super-users-list) can modify a repository if the ACL is empty"
     fi
 
@@ -221,15 +231,8 @@ fn-acl-is-command-line() {
 
 fn-acl-allow-command-line() {
   declare desc="check if dokku commands may modify apps from the command line"
-  local value="${DOKKU_ACL_ALLOW_COMMAND_LINE:-}"
 
-  case "${value,,}" in
-    0 | false | no | off)
-      return 1
-      ;;
-  esac
-
-  return 0
+  [[ "$(fn-acl-global-property allow-command-line)" != "false" ]]
 }
 
 fn-acl-is-super-user() {
@@ -237,7 +240,7 @@ fn-acl-is-super-user() {
   declare USERNAME="$1"
   local super_user
 
-  for super_user in ${DOKKU_SUPER_USER:-}; do
+  for super_user in $(fn-acl-global-property super-user); do
     if [[ "$USERNAME" == "$super_user" ]]; then
       return
     fi
@@ -250,7 +253,71 @@ fn-acl-super-users-list() {
   declare desc="print the super users as a comma-separated list"
   local super_users list
 
-  read -ra super_users <<<"${DOKKU_SUPER_USER:-}"
+  read -ra super_users <<<"$(fn-acl-global-property super-user)"
   printf -v list '%s, ' "${super_users[@]}"
   echo "${list%, }"
+}
+
+fn-acl-load-global-properties() {
+  declare desc="read every global acl property into ACL_GLOBAL_PROPERTIES"
+  local key value properties
+
+  # fail closed: treating an unreadable store as empty would lift every
+  # restriction
+  if ! properties="$(fn-plugin-property-get-all "acl" "--global")"; then
+    dokku_log_fail "Unable to read the global acl properties"
+  fi
+
+  # a global so the values survive the function call; callers must not run
+  # this in a subshell, or every lookup reloads the properties
+  declare -gA ACL_GLOBAL_PROPERTIES=()
+  while read -r key value; do
+    [[ -n "$key" ]] && ACL_GLOBAL_PROPERTIES["$key"]="$value"
+  done <<<"$properties"
+  ACL_GLOBAL_PROPERTIES_LOADED=true
+}
+
+fn-acl-global-property() {
+  declare desc="print the value of a global acl property"
+  declare KEY="$1"
+
+  [[ "${ACL_GLOBAL_PROPERTIES_LOADED:-}" == "true" ]] || fn-acl-load-global-properties
+  echo "${ACL_GLOBAL_PROPERTIES["$KEY"]:-}"
+}
+
+fn-acl-migrate-dokkurc() {
+  declare desc="import the global settings from the dokkurc into properties once"
+  local key var value migrated=false
+
+  fn-plugin-property-exists "acl" "--global" "dokkurc-migrated" && return 0
+
+  for key in super-user allow-command-line user-commands per-app-commands per-service-commands link-commands; do
+    if [[ "$key" == "super-user" ]]; then
+      var="DOKKU_SUPER_USER"
+    else
+      var="DOKKU_ACL_${key//-/_}"
+      var="${var^^}"
+    fi
+
+    value="${!var:-}"
+    [[ -n "$value" ]] || continue
+    fn-plugin-property-exists "acl" "--global" "$key" && continue
+
+    if [[ "$key" == "allow-command-line" ]]; then
+      case "${value,,}" in
+        0 | false | no | off) value="false" ;;
+        *) value="true" ;;
+      esac
+    fi
+
+    fn-plugin-property-write "acl" "--global" "$key" "$value"
+    dokku_log_info1 "Migrated $var to the acl $key property"
+    migrated=true
+  done
+
+  fn-plugin-property-write "acl" "--global" "dokkurc-migrated" "true"
+  if [[ "$migrated" == "true" ]]; then
+    dokku_log_warn "Global acl settings are now managed with 'dokku acl:set --global'"
+    dokku_log_warn "The DOKKU_SUPER_USER and DOKKU_ACL_* variables are no longer read and can be removed from ~dokku/.dokkurc/acl"
+  fi
 }
