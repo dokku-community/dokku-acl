@@ -2,7 +2,9 @@
 
 load 'test_helper'
 
-COMMAND_LINE_ERROR="It appears that you're running this command from the command line.  The \"dokku-acl\" plugin disables this by default for safety.  Please check the \"dokku-acl\" documentation for how to enable command line usage."
+command_line_error() {
+  echo "It appears that you're running this command from the command line, which is disabled because DOKKU_ACL_ALLOW_COMMAND_LINE is set to \"$1\".  Unset it to enable command line usage."
+}
 
 setup() {
   APP="$(new_app_name)"
@@ -85,64 +87,89 @@ MODIFY_HOOKS="pre-build pre-delete pre-receive-app"
   done
 }
 
-@test "(pre-build, pre-delete, pre-receive-app) keep the legacy command line behaviour by default" {
+@test "(pre-build, pre-delete, pre-receive-app) allow command line usage by default" {
   for hook in $MODIFY_HOOKS; do
-    # no acl, no super user: allowed
     run fire_modify_hook "$hook" "$APP"
     [ "$status" -eq 0 ]
     run fire_modify_hook SSH_NAME=default "$hook" "$APP"
     [ "$status" -eq 0 ]
-
-    # no acl, super user set: refused
     run fire_modify_hook DOKKU_SUPER_USER=admin "$hook" "$APP"
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"$COMMAND_LINE_ERROR"* ]]
+    [ "$status" -eq 0 ]
   done
 
   dokku acl:add "$APP" user1
   for hook in $MODIFY_HOOKS; do
-    # acl, no super user: allowed
     run fire_modify_hook "$hook" "$APP"
     [ "$status" -eq 0 ]
-
-    # acl, super user set: refused
     run fire_modify_hook DOKKU_SUPER_USER=admin "$hook" "$APP"
-    [ "$status" -ne 0 ]
-    [[ "$output" == *"$COMMAND_LINE_ERROR"* ]]
+    [ "$status" -eq 0 ]
   done
 }
 
-@test "(pre-build, pre-delete, pre-receive-app) allow command line usage when DOKKU_ACL_ALLOW_COMMAND_LINE is set" {
-  for hook in $MODIFY_HOOKS; do
-    run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE=1 "$hook" "$APP"
-    [ "$status" -eq 0 ]
+@test "(pre-build, pre-delete, pre-receive-app) allow command line usage when DOKKU_ACL_ALLOW_COMMAND_LINE is truthy" {
+  for value in 1 true yes; do
+    for hook in $MODIFY_HOOKS; do
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" "$hook" "$APP"
+      [ "$status" -eq 0 ]
 
-    run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE=1 DOKKU_SUPER_USER=admin "$hook" "$APP"
-    [ "$status" -eq 0 ]
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" DOKKU_SUPER_USER=admin "$hook" "$APP"
+      [ "$status" -eq 0 ]
+    done
   done
 
   dokku acl:add "$APP" user1
-  for hook in $MODIFY_HOOKS; do
-    run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE=1 "$hook" "$APP"
-    [ "$status" -eq 0 ]
+  for value in 1 true yes; do
+    for hook in $MODIFY_HOOKS; do
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" "$hook" "$APP"
+      [ "$status" -eq 0 ]
 
-    run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE=1 DOKKU_SUPER_USER=admin "$hook" "$APP"
-    [ "$status" -eq 0 ]
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" DOKKU_SUPER_USER=admin "$hook" "$APP"
+      [ "$status" -eq 0 ]
+    done
   done
 }
 
-@test "(pre-delete) apps:destroy is refused from the command line when a super user is set" {
-  set_acl_config "export DOKKU_SUPER_USER=admin"
-  run dokku --force apps:destroy "$APP"
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"$COMMAND_LINE_ERROR"* ]]
-  dokku apps:exists "$APP"
+@test "(pre-build, pre-delete, pre-receive-app) refuse command line usage with a super user when DOKKU_ACL_ALLOW_COMMAND_LINE is falsy" {
+  for value in 0 false FALSE no off; do
+    for hook in $MODIFY_HOOKS; do
+      # no acl, no super user: allowed
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" "$hook" "$APP"
+      [ "$status" -eq 0 ]
+
+      # no acl, super user set: refused
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" DOKKU_SUPER_USER=admin "$hook" "$APP"
+      [ "$status" -ne 0 ]
+      [[ "$output" == *"$(command_line_error "$value")"* ]]
+    done
+  done
+
+  dokku acl:add "$APP" user1
+  for value in 0 false FALSE no off; do
+    for hook in $MODIFY_HOOKS; do
+      # acl, no super user: allowed
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" "$hook" "$APP"
+      [ "$status" -eq 0 ]
+
+      # acl, super user set: refused
+      run fire_modify_hook DOKKU_ACL_ALLOW_COMMAND_LINE="$value" DOKKU_SUPER_USER=admin "$hook" "$APP"
+      [ "$status" -ne 0 ]
+      [[ "$output" == *"$(command_line_error "$value")"* ]]
+    done
+  done
 }
 
-@test "(pre-delete) apps:destroy works from the command line when DOKKU_ACL_ALLOW_COMMAND_LINE is set" {
-  set_acl_config "export DOKKU_SUPER_USER=admin" "export DOKKU_ACL_ALLOW_COMMAND_LINE=1"
+@test "(pre-delete) apps:destroy works from the command line when a super user is set" {
+  set_acl_config "export DOKKU_SUPER_USER=admin"
   run dokku --force apps:destroy "$APP"
   [ "$status" -eq 0 ]
   run dokku apps:exists "$APP"
   [ "$status" -ne 0 ]
+}
+
+@test "(pre-delete) apps:destroy is refused from the command line when DOKKU_ACL_ALLOW_COMMAND_LINE is disabled" {
+  set_acl_config "export DOKKU_SUPER_USER=admin" "export DOKKU_ACL_ALLOW_COMMAND_LINE=0"
+  run dokku --force apps:destroy "$APP"
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"$(command_line_error 0)"* ]]
+  dokku apps:exists "$APP"
 }

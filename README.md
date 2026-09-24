@@ -54,19 +54,20 @@ using `dokku ssh-keys:add`, this will be done automatically for you.
 
 ### configuring command line usage
 
-By default, certain dokku commands (e.g. `app:destroy`) won't work when run
-from the command line on the server, if `DOKKU_SUPER_USER` is set, even when
-run as `root` or `dokku`. To avoid confusion, we recommend allowing command
-line access by defining `DOKKU_ACL_ALLOW_COMMAND_LINE` in
+By default, dokku commands that modify an app (e.g. `apps:destroy`) work when
+run from the command line on the server. If you want these commands to be
+refused from the command line whenever `DOKKU_SUPER_USER` is set, even when run
+as `root` or `dokku`, disable command line access by setting
+`DOKKU_ACL_ALLOW_COMMAND_LINE` to `0`, `false`, `no` or `off` in
 `~dokku/.dokkurc/acl`:
 
 ```shell
-export DOKKU_ACL_ALLOW_COMMAND_LINE=1
+export DOKKU_ACL_ALLOW_COMMAND_LINE=0
 ```
 
-(The default behaviour exists to prevent security issues for users who were
-depending on the legacy behaviour. We recommend that all users set the
-variable above.)
+Previous versions of this plugin refused these commands by default when
+`DOKKU_SUPER_USER` was set, unless `DOKKU_ACL_ALLOW_COMMAND_LINE` was defined.
+If you depended on that behaviour, set the variable above when upgrading.
 
 ### default behavior
 
