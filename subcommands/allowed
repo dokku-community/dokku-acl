@@ -6,8 +6,8 @@ source "$PLUGIN_BASE_PATH/common/functions"
 source "$(dirname "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)")/internal-functions"
 
 cmd-acl-allowed() {
-  #E show apps of a given type that the user has access to
-  #E dokku $PLUGIN_COMMAND_PREFIX:list redis birds
+  #E show apps that the admin user has access to
+  #E dokku $PLUGIN_COMMAND_PREFIX:allowed admin
   #A username, user to check for access
   declare desc="list apps the user has access to"
   local cmd="$PLUGIN_COMMAND_PREFIX:allowed" argv=("$@")
@@ -28,7 +28,10 @@ cmd-acl-allowed() {
   fi
 
   pushd "$DOKKU_ROOT" >/dev/null
-  ls -d */acl/$USERNAME 2>/dev/null | cut -d '/' -f1 || true
+  local acl_file
+  for acl_file in */acl/"$USERNAME"; do
+    [[ -f "$acl_file" ]] && echo "${acl_file%%/*}"
+  done
   popd >/dev/null
 }
 

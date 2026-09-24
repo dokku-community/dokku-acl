@@ -18,7 +18,7 @@ cmd-acl-list-service() {
   fn-acl-check-service "$SERVICE_TYPE" "$SERVICE"
 
   local ACL_PATH="$DOKKU_LIB_ROOT/services/$SERVICE_TYPE/$SERVICE/acl"
-  ls -1 "$ACL_PATH" >&2 2>/dev/null || true
+  ls -1 "$ACL_PATH" 2>/dev/null || true
 }
 
 cmd-acl-list-service "$@"
